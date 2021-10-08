@@ -1,4 +1,4 @@
-
+from django.http import request
 from rest_framework import serializers
 from . models import *
  
@@ -6,8 +6,7 @@ from django_cassandra_engine.rest.serializers import DjangoCassandraModelSeriali
  
  
 class ExampleModelerializer(DjangoCassandraModelSerializer):
- 
+
     class Meta:
-        model = Person
-        fields = '__all__'
- 
+        model = ExampleModel
+        fields = ['example_type', 'description']

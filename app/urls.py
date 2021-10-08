@@ -4,5 +4,6 @@ from . views import*
 
 urlpatterns = [
     path('', homepage, name='home'),
-    # path('', ThingMultiplePKViewSet.as_view({'get': 'list'}), name='home'),
+    path('test', TestView.as_view(), name='test'),
+    path('overview', overview, name='overview'),
 ]

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -86,31 +87,35 @@ WSGI_APPLICATION = 'cassandra_demo.wsgi.application'
 
 from cassandra import ConsistencyLevel
 DATABASES = {
-    'default': {
-        'ENGINE': 'django_cassandra_engine',
-        'NAME': 'tutorialspoint',
-        'USER': 'user',
-        'PASSWORD': 'pass',
-        'TEST_NAME': 'test_db',
-        'HOST': '127.0.0.1',
-        'OPTIONS': {
-            'replication': {
-                'strategy_class': 'SimpleStrategy',
-                'replication_factor': 3
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        },
+        'cassandra': {
+            'ENGINE': 'django_cassandra_engine',
+            'NAME': 'tutorialspoint',
+            'USER': 'cassandra',
+            'PASSWORD': 'cassandra',
+            'TEST_NAME': 'test_db',
+            'HOST': '127.0.0.1',
+            'OPTIONS': {
+                'replication': {
+                    'strategy_class': 'SimpleStrategy',
+                    'replication_factor': 1
                 },
-             'connection': {
+                'connection': {
                     'consistency': ConsistencyLevel.LOCAL_ONE,
                     'retry_connect': True
                     # + All connection options for cassandra.cluster.Cluster()
                 },
-            'session': {
-                'default_timeout': 10,
-                'default_fetch_size': 10000
-                # + All options for cassandra.cluster.Session()
+                'session': {
+                    'default_timeout': 10,
+                    'default_fetch_size': 10000
+                    # + All options for cassandra.cluster.Session()
+                }
             }
         }
     }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
