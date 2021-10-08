@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_cassandra_engine',
     'app',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -88,6 +89,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django_cassandra_engine',
         'NAME': 'tutorialspoint',
+        'USER': 'user',
+        'PASSWORD': 'pass',
         'TEST_NAME': 'test_db',
         'HOST': '127.0.0.1',
         'OPTIONS': {
@@ -96,7 +99,7 @@ DATABASES = {
                 'replication_factor': 3
                 },
              'connection': {
-                    'consistency': ConsistencyLevel.SERIAL,
+                    'consistency': ConsistencyLevel.LOCAL_ONE,
                     'retry_connect': True
                     # + All connection options for cassandra.cluster.Cluster()
                 },
@@ -144,8 +147,11 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-
+import os
 STATIC_URL = '/static/'
+STATIC_ROOT= os.path.join(BASE_DIR,'static')
+MEDIA_ROOT=os.path.join(BASE_DIR,'media')
+MEDIA_URL='/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

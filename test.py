@@ -1,19 +1,68 @@
 from cassandra.cluster import Cluster
 cluster = Cluster(['127.0.0.1'], control_connection_timeout=10,  port=9042)
-cluster.connect()
+session = cluster.connect()
+# print('session', session)
 
-# from cassandra.cluster import Cluster
-# from cassandra.policies import DCAwareRoundRobinPolicy
-# from cassandra.auth import PlainTextAuthProvider
+# session.execute("CREATE KEYSPACE demo WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}")
+# session.execute("CREATE TABLE demo.users (lastname text PRIMARY KEY, firstname text, email text)")
+# session.execute("""
+#     INSERT INTO demo.users
+#     (lastname, firstname, email)
+#      VALUES (%s,%s,%s)
+#     """,
+#     ("Brutus", "Marcus", "marcus@example.com")
+# )
+# session.execute("""
+#     INSERT INTO demo.users
+#     (lastname, firstname, email)
+#      VALUES (%s,%s,%s)
+#     """,
+#     ("Caesar", "Julius", "caesar@example.com")
+# )
 
-# def cassandra_conn():
+# result = session.execute("""
+#     SELECT * FROM demo.users WHERE lastname = %s
+#     """,
+#     ["Brutus"]).one()
+# print('result', result)
+# print(result.firstname, result.email)
 
-#    auth_provider = PlainTextAuthProvider(username='cassandra', password='cassandra')
-#    cluster = Cluster(['127.0.0.1'], load_balancing_policy=DCAwareRoundRobinPolicy(local_dc='US-WEST'), port=9042, auth_provider=auth_provider)
+# result = session.execute("""
+#     SELECT * FROM demo.users WHERE lastname = %s
+#     """,
+#     ["Caesar"]).one()
+# print(result.firstname, result.email)
 
-#    session = cluster.connect()
+# rows = session.execute('SELECT lastname, firstname, email FROM demo.users')
+# for row in rows:
+#     print('lastname', row.lastname, 'firstname', row.firstname, 'email', row.email)
 
-#    return session, cluster
+# rows = session.execute('SELECT lastname, firstname, email FROM demo.users')
+# for (lastname, firstname, email) in rows:
+#     print(lastname, firstname, email)
 
-# cassandra_conn = cassandra_conn()
-# print('cassandra_conn', cassandra_conn)
+rows = session.execute('SELECT lastname, firstname, email FROM demo.users')
+for row in rows:
+    print(row[0], row[1], row[2])
+
+
+# session.execute("""
+#     UPDATE demo.users SET email =%s WHERE lastname = %s
+#     """,
+#     ["mb@example.com", "Brutus"])
+
+# session.execute("""
+#     UPDATE demo.users SET email =%s WHERE lastname = %s
+#     """,
+#     ["jc@example.com", "Caesar"])
+
+# result = session.execute("""
+#     SELECT * FROM demo.users WHERE lastname = %s
+#     """,
+#     ["Caesar"]).one()
+# print(result.firstname, result.email)
+
+# session.execute("""
+#     DELETE FROM demo.users WHERE lastname = %s
+#     """,
+#     ["Brutus"])
