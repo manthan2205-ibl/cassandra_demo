@@ -37,6 +37,10 @@ from rest_framework.generics import ListCreateAPIView, ListAPIView, GenericAPIVi
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView, ListAPIView, CreateAPIView, DestroyAPIView, \
+                                    ListCreateAPIView, GenericAPIView
+from rest_framework.permissions import AllowAny
+import json
  
 
 
@@ -98,6 +102,65 @@ class TestView(GenericAPIView):
         )
  
  
+
+class UserRegisterView(GenericAPIView):
+    permission_classes = [AllowAny]
+    queryset = UserModel.objects.all()
+    serializer_class = UserRegisterSerializer
+
+    def post(self, request, *args, **kwargs):
+        # ata=request.data
+        # print(ata)
+        # profile = ata['profile']
+        # print(type(profile))
+        serializer = UserRegisterSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                  "Message": serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # try:
+        name = serializer.validated_data['name']
+        email = serializer.validated_data['email']
+        profile_url = serializer.validated_data['profile_url']
+        profile = serializer.validated_data['profile']
+        statuss = serializer.validated_data['status']
+        is_online = serializer.validated_data['is_online']
+        # if statuss == '0':
+        #     statuss=False
+        # elif statuss == '1':
+        #     statuss=True
+        position = serializer.validated_data['position']
+
+        deviceToken = {"mobile":["",""], "desktop":["",""],"web":["",""]}
+
+        UserModel.objects.create(name=name, email=email,profile_url=profile_url,
+                        status=statuss, position=position, is_online=is_online,deviceToken=deviceToken)
+           
+        # serializer.save()
+        return Response(data={"Status": status.HTTP_201_CREATED,
+                                "Message": "User Registered",
+                                "Results": serializer.data},
+                        status=status.HTTP_201_CREATED)
+        # except:
+        #     return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                    # "Message": serializer.errors},
+                            # status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # from rest_framework.decorators import api_view
 
