@@ -101,6 +101,7 @@ DATABASES = {
             'OPTIONS': {
                 'replication': {
                     'strategy_class': 'SimpleStrategy',
+                    # NetworkTopologyStrategy
                     'replication_factor': 1
                 },
                 'connection': {
