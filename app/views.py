@@ -127,13 +127,9 @@ class UserRegisterView(GenericAPIView):
         profile = serializer.validated_data['profile']
         statuss = serializer.validated_data['status']
         is_online = serializer.validated_data['is_online']
-        # if statuss == '0':
-        #     statuss=False
-        # elif statuss == '1':
-        #     statuss=True
         position = serializer.validated_data['position']
 
-        deviceToken = {"mobile":["",""], "desktop":["",""],"web":["",""]}
+        deviceToken = {"mobile":"", "desktop":"","web":""}
 
         UserModel.objects.create(name=name, email=email,profile_url=profile_url,
                         status=statuss, position=position, is_online=is_online,deviceToken=deviceToken)
