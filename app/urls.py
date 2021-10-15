@@ -8,8 +8,11 @@ session = cluster.connect('tutorialspoint')
 try:
     # query = session.execute("""ALTER TABLE example_model DROP emp_email""")
     # print('query', query)
-    query = session.execute("ALTER TABLE user_model DROP profile")
-    print('query', query)
+    # query = session.execute("ALTER TABLE user_model DROP profile")
+    # print('query', query)
+    # query = session.execute("ALTER TABLE group_model DROP admin_id")
+    # print('query', query)
+    print('query')
 except:
     pass
 
@@ -18,7 +21,11 @@ urlpatterns = [
     path('test', TestView.as_view(), name='test'),
     # path('overview', overview, name='overview'),
 
-    # api 
-    path('user_register', UserRegisterView.as_view(), name='user_register'),
-    path('user_update/<str:id>/', UserUpdateView.as_view(), name='user_update'),
+    # api  User
+    path('user_register', UserRegisterView.as_view()),
+    path('user_update/<str:id>/', UserUpdateView.as_view()),
+
+    # api  Group
+    path('create_group', CreateGroupView.as_view()),
+    path('update_group/<str:id>/', UpdateGroupView.as_view()),
 ]

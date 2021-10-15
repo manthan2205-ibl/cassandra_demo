@@ -25,8 +25,22 @@ class UserRegisterSerializer(Serializer):
     profile = serializers.FileField(required=True)
     is_online = serializers.BooleanField(required=True)
 
-
     class Meta:
         model = UserModel
         fields = ['name', 'email', 'profile_url',  'profile',
                   'status', 'position', 'is_online']
+
+
+class CreateGroupSerializer(Serializer):
+
+    admin_id = serializers.CharField(required=True)
+    group_profile = serializers.CharField(required=True)
+    group_name = serializers.CharField(required=True)
+    group_type = serializers.CharField(required=True)
+    is_channel = serializers.BooleanField(required=True)
+    type = serializers.CharField(required=True)
+
+    class Meta:
+        model = UserModel
+        fields = ['admin_id', 'group_profile', 'group_name',  'group_type',
+                  'is_channel', 'type']
