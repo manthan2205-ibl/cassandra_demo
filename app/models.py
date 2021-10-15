@@ -14,20 +14,18 @@ class ExampleModel(DjangoCassandraModel):
     description  = columns.Text(required=False)
 
 
-
-
-
 class UserModel(DjangoCassandraModel):
     user_id = columns.UUID(primary_key=True, default=uuid.uuid4)
     name = columns.Text(required=False)
     email = columns.Text(required=False)
     profile_url = columns.Text(required=False)
-    profile = columns.Blob(required=False)
+    # profile = columns.Blob(required=False) # image binary
     report_to = columns.UUID(required=False) #UserModel
     status = columns.Text(required=False)
     position = columns.Text(required=False)
     is_online = columns.Boolean(default=False)
-    deviceToken = columns.Map(key_type=columns.Text, value_type=columns.Text, default=dict,required=False)
+    deviceToken = columns.Map(key_type=columns.Text, value_type=columns.List(value_type=columns.Text, 
+                                            default=list,required=False), default=dict,required=False)
     blocked_by = columns.UUID(required=False) #UserModel
 
     created_at = columns.DateTime(default=datetime.datetime.now())

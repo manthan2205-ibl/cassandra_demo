@@ -108,11 +108,36 @@ class UserRegisterView(GenericAPIView):
     queryset = UserModel.objects.all()
     serializer_class = UserRegisterSerializer
 
+
+    def get(self, request, *args, **kwargs):
+        a= 2
+        # query = UserModel.objects.filter(user_id='5da73767-1cff-4214-a441-eb7fc1dd8128')
+        query = UserModel.objects.all()
+        user_list = []
+        for user in query:
+            user_dic = {}
+            user_dic['name'] = user.name
+            user_dic['email'] = user.email
+            user_dic['profile_url'] = user.profile_url
+            user_dic['profile'] = str(user.profile)
+            user_dic['status'] = user.status
+            user_dic['is_online'] = user.is_online
+            user_dic['position'] = user.position
+            user_dic['deviceToken'] = user.deviceToken
+            # user.delete()
+            # user.save()
+            user_list.append(user_dic)
+        
+        return Response(
+            data={
+                "Status":status.HTTP_200_OK,
+                "Message":f"No Mini Lesson Category Found using ID ({a}).",
+                "Results": user_list},
+            status=status.HTTP_200_OK
+        )
+
     def post(self, request, *args, **kwargs):
-        # ata=request.data
-        # print(ata)
-        # profile = ata['profile']
-        # print(type(profile))
+        
         serializer = UserRegisterSerializer(data=request.data)
 
         if not serializer.is_valid():
@@ -129,9 +154,73 @@ class UserRegisterView(GenericAPIView):
         is_online = serializer.validated_data['is_online']
         position = serializer.validated_data['position']
 
-        deviceToken = {"mobile":"", "desktop":"","web":""}
+        data=request.data
+        deviceToken = data['deviceToken']
+        
+        deviceToken = json.loads(deviceToken)
+        print('deviceToken', deviceToken)
+        print(type(deviceToken))
 
-        UserModel.objects.create(name=name, email=email,profile_url=profile_url,
+        profile = data['profile'].read()
+        print('profile', profile)
+
+
+        # deviceToken = {"mobile":["token","token"], "desktop":["token","token"],"web":["token","token"]}
+
+        # UserModel.objects.create(name=name, email=email,profile_url=profile_url,profile=profile,
+        #                 status=statuss, position=position, is_online=is_online,deviceToken=deviceToken)
+           
+        # serializer.save()
+        return Response(data={"Status": status.HTTP_201_CREATED,
+                                "Message": "User Registered",
+                                "Results": serializer.data},
+                        status=status.HTTP_201_CREATED)
+      
+
+
+class UserUpdateView(GenericAPIView):
+    permission_classes = [AllowAny]
+    queryset = UserModel.objects.all()
+    serializer_class = UserRegisterSerializer
+
+
+    def put(self, request, *args, **kwargs):
+
+        id = self.kwargs.get('id')
+        print('id', id)
+        UserModel_obj = UserModel.objects.get(user_id=id)
+        print('UserModel_obj', UserModel_obj)
+        
+        serializer = UserRegisterSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                  "Message": serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # try:
+        name = serializer.validated_data['name']
+        email = serializer.validated_data['email']
+        profile_url = serializer.validated_data['profile_url']
+        profile = serializer.validated_data['profile']
+        statuss = serializer.validated_data['status']
+        is_online = serializer.validated_data['is_online']
+        position = serializer.validated_data['position']
+
+        data=request.data
+        deviceToken = data['deviceToken']
+        
+        deviceToken = json.loads(deviceToken)
+        print('deviceToken', deviceToken)
+        print(type(deviceToken))
+
+        # profile = data['profile'].read()
+        # print('profile', profile)
+
+
+        # deviceToken = {"mobile":["token","token"], "desktop":["token","token"],"web":["token","token"]}
+
+        UserModel.objects.filter(user_id=id).update(name=name, email=email,profile_url=profile_url,
                         status=statuss, position=position, is_online=is_online,deviceToken=deviceToken)
            
         # serializer.save()
@@ -139,14 +228,7 @@ class UserRegisterView(GenericAPIView):
                                 "Message": "User Registered",
                                 "Results": serializer.data},
                         status=status.HTTP_201_CREATED)
-        # except:
-        #     return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                    # "Message": serializer.errors},
-                            # status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
+      
 
 
 

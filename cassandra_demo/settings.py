@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django_cassandra_engine',
     'app',
     'rest_framework',
+    # 'django_cassandra_engine.sessions',
 ]
 
 MIDDLEWARE = [
@@ -117,6 +118,8 @@ DATABASES = {
             }
         }
     }
+
+# SESSION_ENGINE = 'django_cassandra_engine.sessions.backends.db'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
