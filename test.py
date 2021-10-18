@@ -83,6 +83,22 @@ session = cluster.connect('killrvideo')
 # "INSERT INTO videos_by_tag (tag, added_date, video_id, title)" +
 # "VALUES ('cassandra', '2013-01-10', uuid(), 'Cassandra Is My Friend')")
 
-print('{0:12} {1:40} {2:5}'.format('Tag', 'ID', 'Title'))
-for val in session.execute("select * from videos_by_tag"):
-    print('{0:12} {1:40} {2:5}'.format(val[0], val[1], val[3]))
+# print('{0:12} {1:40} {2:5}'.format('Tag', 'ID', 'Title'))
+# for val in session.execute("select * from videos_by_tag"):
+#     print('{0:12} {1:40} {2:5}'.format(val[0], val[1], val[3]))
+
+
+
+
+
+
+
+
+import json
+from websocket import create_connection
+ws = create_connection("ws://127.0.0.1:8010/ws/7dcdbe64-0f2f-4a7c-8fdd-8d7ee35bfe99/b5ccc3ef-a907-435b-9490-03a0f5d6eab4/")
+ws.send(json.dumps({"command":"send",
+    "message":"what are u doing"}))
+result =  ws.recv()
+print (result)
+ws.close()

@@ -10,9 +10,9 @@ from .models import *
 class MessageConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.group_id = self.scope['url_route']['kwargs']['group_id']
-        self.admin_id = self.scope['url_route']['kwargs']['admin_id']
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
         print('group_id', self.group_id)
-        print('admin_id', self.admin_id)
+        print('admin_id', self.user_id)
         await self.accept()
 
         self.room_group_name = 'chat_%s' % self.group_id
@@ -23,7 +23,8 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
         self.channel_name
         )
 
-        message_data = await self.get_message_data(self.group_id, self.admin_id)
+        message_data = await self.get_message_data(self.group_id, self.user_id)
+        message_data = {"result": "true", "Message": "connected"}
         await self.send_json(message_data)
 
 
@@ -40,61 +41,55 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, content):
         print("CONTENT", content)
         if content['command'] == "send":
-            message = content['message']
+            message_id = content['message_id']
 
-            print('message', message)
+            print('message_id', message_id)
             
             self.room_name = "room" + str(self.group_id)
-            # message_data = await self.send_message_data(self.room_id, self.user_id, message)
+            message_data = await self.send_message_data(message_id)
 
-            # await self.send_json(message_data)
+            await self.send_json(message_data)
 
             await self.channel_layer.group_send(
                 self.room_name,
                 {
                     'type': 'recieve_group_message',
-                    'message': message
+                    'message': message_id
                 }
             )
 
 
 
-    # @sync_to_async
-    # def send_message_data(self, room_id, user_id, message):
-    #     try:
-    #         Room_obj = Room.objects.get(id=room_id,is_delete=0)
-    #     except:
-    #         result = {'result': 'false', 'Message': 'room id does not match', 'internalCode': '001'}
-    #         return result
-    #     try:
-    #         User_obj = Chat_User.objects.get(id=user_id,is_delete=0)
-    #     except:
-    #         result = {'result': 'false', 'Message': 'user id does not match', 'internalCode': '002'}
-    #         return result
+    @sync_to_async
+    def send_message_data(self, message_id):
+        try:
+            msg = MessageModel.objects.get(message_id=message_id)
+        except:
+            result = {'result': 'false', 'Message': 'group id does not match', 'internalCode': '004'}
+            return result
+        msg_dic = {}
+        msg_dic['message_id'] = str(msg.message_id)
+        msg_dic['gif_url'] = msg.gif_url
+        msg_dic['is_reply'] = msg.is_reply
+        msg_dic['message'] = msg.message
+        msg_dic['sender_id'] = str(msg.sender_id)
+        msg_dic['sender_name'] = msg.sender_name
+        msg_dic['is_deleted'] = msg.is_deleted
+        msg_dic['delete_type'] = msg.delete_type
+        msg_dic['type'] = msg.type
+        msg_dic['file'] = msg.file
+        msg_dic['image'] = msg.image
+        msg_dic['reply_data'] = msg.reply_data
+        msg_dic['read_by'] = msg.read_by
 
-    #     Participants_obj = Participants.objects.get(room=Room_obj)
-    #     users = Participants_obj.users.all()
-    #     if User_obj in users:
-    #         Messages_obj = Messages.objects.create(room=Room_obj,user=User_obj,message=message)
-    #         Messages_obj_dic = {}
-    #         Messages_obj_dic['message_id'] = Messages_obj.id
-    #         Messages_obj_dic['room_name'] = Messages_obj.room.room_name
-    #         Messages_obj_dic['username'] = Messages_obj.user.username
-    #         Messages_obj_dic['message'] = ''
-    #         Messages_obj_dic['file'] = ''
-    #         if Messages_obj.file:
-    #             Messages_obj_dic['file'] = Messages_obj.file.url
-    #         if Messages_obj.message:
-    #             Messages_obj_dic['message'] = Messages_obj.message
-    #         result = {'result': 'true', 'Message': Messages_obj_dic, 'internalCode': '003'}
-    #     else:
-    #         result = {'result': 'false', 'Message': 'user id does not in group', 'internalCode': '005'}
-    #     return result
+        result = {'result': 'true', 'Message': msg_dic, 'internalCode': '003'}
+    
+        return result
 
 
 
     @sync_to_async
-    def get_message_data(self, group_id,admin_id):
+    def get_group_data(self, group_id,user_id):
         try:
             GroupModel_obj = GroupModel.objects.get(group_id=group_id)
         except:
@@ -102,13 +97,13 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
             return result
         
         try:
-            User_obj = UserModel.objects.get(user_id=admin_id)
+            User_obj = UserModel.objects.get(user_id=user_id)
         except:
             result = {'result': 'false', 'Message': 'admin id does not match', 'internalCode': '005'}
             return result
 
-        GroupModel_obj = GroupModel.objects.filter(admin_id=admin_id)
-        print('GroupModel_obj', GroupModel_obj)
+        GroupModel_obj = GroupModel.objects.filter(admin_id=user_id)
+        # print('GroupModel_obj', GroupModel_obj)
         GroupModel_obj_list = []
         for i in GroupModel_obj:
             GroupModel_obj_dic = {}
@@ -120,8 +115,51 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
             GroupModel_obj_dic['type'] = i.type
             GroupModel_obj_list.append(GroupModel_obj_dic)
 
+        if GroupModel_obj_list:
             result = {'result': 'true', 'Message': GroupModel_obj_list, 'internalCode': '006'}
-        # else:
-        #     result = {'result': 'false', 'Message': 'user id does not in group', 'internalCode': '007'}
+        else:
+            result = {'result': 'false', 'Message': 'GroupModel_obj_list is empty', 'internalCode': '007'}
+
+        return result
+
+    
+    @sync_to_async
+    def get_message_data(self, group_id,user_id):
+        try:
+            GroupModel_obj = GroupModel.objects.get(group_id=group_id)
+        except:
+            result = {'result': 'false', 'Message': 'group id does not match', 'internalCode': '004'}
+            return result
+        
+        try:
+            User_obj = UserModel.objects.get(user_id=user_id)
+        except:
+            result = {'result': 'false', 'Message': 'admin id does not match', 'internalCode': '005'}
+            return result
+
+        MessageModel_obj = MessageModel.objects.filter(sender_id=user_id)
+        print('MessageModel_obj', MessageModel_obj)
+        message_list = []
+        for msg in MessageModel_obj:
+            msg_dic = {}
+            msg_dic['message_id'] = str(msg.message_id)
+            msg_dic['gif_url'] = msg.gif_url
+            msg_dic['is_reply'] = msg.is_reply
+            msg_dic['message'] = msg.message
+            msg_dic['sender_id'] = str(msg.sender_id)
+            msg_dic['sender_name'] = msg.sender_name
+            msg_dic['is_deleted'] = msg.is_deleted
+            msg_dic['delete_type'] = msg.delete_type
+            msg_dic['type'] = msg.type
+            msg_dic['file'] = msg.file
+            msg_dic['image'] = msg.image
+            msg_dic['reply_data'] = msg.reply_data
+            msg_dic['read_by'] = msg.read_by
+            message_list.append(msg_dic)
+
+        if message_list:
+            result = {'result': 'true', 'Message': message_list, 'internalCode': '006'}
+        else:
+            result = {'result': 'false', 'Message': 'message_list is empty', 'internalCode': '007'}
 
         return result

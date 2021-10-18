@@ -62,6 +62,10 @@ class GroupModel(DjangoCassandraModel):
 
 class MessageModel(DjangoCassandraModel):
     message_id = columns.UUID(primary_key=True, default=uuid.uuid4)
+    # new 
+    # group_id = columns.UUID(required=False) #GroupModel
+    # team_id = columns.UUID(required=False) #TeamModel
+    # new 
     file = columns.List(value_type=columns.Text, default=list,required=False)
     gif_url = columns.Text(required=False)
     image = columns.List(value_type=columns.Text, default=list,required=False)
@@ -70,7 +74,10 @@ class MessageModel(DjangoCassandraModel):
     reply_data = columns.Map(key_type=columns.Text, value_type=columns.Text, default=dict,required=False)
     sender_id = columns.UUID(required=False) #UserModel
     sender_name = columns.Text(required=False)
-    read_by = columns.Map(key_type=columns.Text, value_type=columns.Text, default=dict,required=False)
+    # read_by = columns.Map(key_type=columns.Text, value_type=columns.Text, default=dict,required=False)
+    read_by = columns.List(value_type=columns.Map(key_type=columns.Text, 
+                            value_type=columns.Text, default=dict,required=False), 
+                        default=list,required=False)
     is_deleted = columns.Boolean(default=False)
     delete_type = columns.Text(required=False)
     time = columns.DateTime(required=False)
