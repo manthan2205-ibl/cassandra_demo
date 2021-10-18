@@ -38,10 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'django_cassandra_engine',
     'app',
     'rest_framework',
     # 'django_cassandra_engine.sessions',
+    
 ]
 
 MIDDLEWARE = [
@@ -73,6 +75,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'cassandra_demo.wsgi.application'
+ASGI_APPLICATION = 'cassandra_demo.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 # Database

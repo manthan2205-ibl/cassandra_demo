@@ -26,7 +26,6 @@ class UserRegisterSerializer(Serializer):
     is_online = serializers.BooleanField(required=True)
 
     class Meta:
-        model = UserModel
         fields = ['name', 'email', 'profile_url',  'profile',
                   'status', 'position', 'is_online']
 
@@ -41,6 +40,21 @@ class CreateGroupSerializer(Serializer):
     type = serializers.CharField(required=True)
 
     class Meta:
-        model = UserModel
         fields = ['admin_id', 'group_profile', 'group_name',  'group_type',
                   'is_channel', 'type']
+
+
+class MessageSerializer(Serializer):
+
+    gif_url = serializers.CharField(required=True)
+    is_reply = serializers.BooleanField(required=True)
+    message = serializers.CharField(required=True)
+    sender_id = serializers.CharField(required=True)
+    sender_name = serializers.CharField(required=True)
+    is_deleted = serializers.BooleanField(required=True)
+    delete_type = serializers.CharField(required=True)
+    type = serializers.CharField(required=True)
+
+    class Meta:
+        fields = ['gif_url', 'is_reply', 'message',  'sender_id',
+                  'sender_name', 'is_deleted', 'delete_type', 'type']

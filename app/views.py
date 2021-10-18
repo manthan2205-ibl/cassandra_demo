@@ -367,8 +367,74 @@ class UpdateGroupView(GenericAPIView):
 
 
 
+class CreateMessageView(GenericAPIView):
+    permission_classes = [AllowAny]
+    queryset = MessageModel.objects.all()
+    serializer_class = CreateGroupSerializer
 
 
+    def get(self, request, *args, **kwargs):
+        # query = UserModel.objects.filter(user_id='5da73767-1cff-4214-a441-eb7fc1dd8128')
+        query = GroupModel.objects.all()
+        group_list = []
+
+        for grp in query:
+            grp_dic = {}
+            grp_dic['group_id'] = grp.group_id
+            grp_dic['admin_id'] = grp.admin_id
+            grp_dic['group_profile'] = grp.group_profile
+            grp_dic['group_name'] = grp.group_name
+            grp_dic['group_type'] = grp.group_type
+            grp_dic['is_channel'] = grp.is_channel
+            grp_dic['type'] = grp.type
+            grp_dic['members'] = grp.members
+            grp_dic['read_by'] = grp.read_by
+            grp_dic['recent_message'] = grp.recent_message
+            group_list.append(grp_dic)
+        
+        return Response(
+            data={
+                "Status":status.HTTP_200_OK,
+                "Message":f"group list",
+                "Results": group_list},
+            status=status.HTTP_200_OK
+        )
+
+    def post(self, request, *args, **kwargs):
+        
+        serializer = CreateGroupSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                  "Message": serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # try:
+        admin_id = serializer.validated_data['admin_id']
+        group_profile = serializer.validated_data['group_profile']
+        group_name = serializer.validated_data['group_name']
+        group_type = serializer.validated_data['group_type']
+        is_channel = serializer.validated_data['is_channel']
+        type1 = serializer.validated_data['type']
+
+        admin_id = uuid.UUID(admin_id)
+
+        members =  [admin_id, admin_id, admin_id]
+        read_by = [{"read_at": "timestamp", "user_id": str(admin_id)},{"read_at": "timestamp", "user_id": str(admin_id)}]
+        recent_message = {"message": "message", 
+                        "messageTime": "timestamp", 
+                        "senderId": str(admin_id), 
+                        "senderName": "name"}
+
+        GroupModel.objects.create(admin_id=admin_id, group_profile=group_profile,group_name=group_name,
+                        group_type=group_type, is_channel=is_channel, type=type1,
+                        members=members,read_by=read_by, recent_message=recent_message)
+           
+        return Response(data={"Status": status.HTTP_201_CREATED,
+                                "Message": "Group created",
+                                "Results": serializer.data},
+                        status=status.HTTP_201_CREATED)
+      
 
 
 
