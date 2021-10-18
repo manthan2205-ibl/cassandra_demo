@@ -1,8 +1,11 @@
 import json
+from typing import Generic
 
 from channels.generic.websocket import AsyncWebsocketConsumer, AsyncJsonWebsocketConsumer# The class we're using
 from asgiref.sync import sync_to_async
-from django.db.models import manager # Implement later
+from django.db.models import manager
+
+import app # Implement later
 
 from .models import *
 
@@ -24,7 +27,7 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
         )
 
         message_data = await self.get_message_data(self.group_id, self.user_id)
-        message_data = {"result": "true", "Message": "connected"}
+        # message_data = {"result": "true", "Message": "connected"}
         await self.send_json(message_data)
 
 
@@ -58,17 +61,25 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
                 }
             )
 
-
-
     @sync_to_async
     def send_message_data(self, message_id):
         try:
             msg = MessageModel.objects.get(message_id=message_id)
         except:
-            result = {'result': 'false', 'Message': 'group id does not match', 'internalCode': '004'}
+            result = {'result': 'false', 'Message': 'message id does not match', 'internalCode': '004'}
             return result
         msg_dic = {}
         msg_dic['message_id'] = str(msg.message_id)
+
+        if msg.group_id == None: 
+            msg_dic['group_id'] = ''
+        else:
+            msg_dic['group_id'] = str(msg.group_id)
+        if msg.team_id == None: 
+            msg_dic['team_id'] = ''
+        else:
+            msg_dic['team_id'] = str(msg.team_id)
+
         msg_dic['gif_url'] = msg.gif_url
         msg_dic['is_reply'] = msg.is_reply
         msg_dic['message'] = msg.message
@@ -85,43 +96,6 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
         result = {'result': 'true', 'Message': msg_dic, 'internalCode': '003'}
     
         return result
-
-
-
-    @sync_to_async
-    def get_group_data(self, group_id,user_id):
-        try:
-            GroupModel_obj = GroupModel.objects.get(group_id=group_id)
-        except:
-            result = {'result': 'false', 'Message': 'group id does not match', 'internalCode': '004'}
-            return result
-        
-        try:
-            User_obj = UserModel.objects.get(user_id=user_id)
-        except:
-            result = {'result': 'false', 'Message': 'admin id does not match', 'internalCode': '005'}
-            return result
-
-        GroupModel_obj = GroupModel.objects.filter(admin_id=user_id)
-        # print('GroupModel_obj', GroupModel_obj)
-        GroupModel_obj_list = []
-        for i in GroupModel_obj:
-            GroupModel_obj_dic = {}
-            GroupModel_obj_dic['admin_id'] = str(i.admin_id)
-            GroupModel_obj_dic['group_profile'] = i.group_profile
-            GroupModel_obj_dic['group_name'] = i.group_name
-            GroupModel_obj_dic['group_type'] = i.group_type
-            GroupModel_obj_dic['is_channel'] = i.is_channel
-            GroupModel_obj_dic['type'] = i.type
-            GroupModel_obj_list.append(GroupModel_obj_dic)
-
-        if GroupModel_obj_list:
-            result = {'result': 'true', 'Message': GroupModel_obj_list, 'internalCode': '006'}
-        else:
-            result = {'result': 'false', 'Message': 'GroupModel_obj_list is empty', 'internalCode': '007'}
-
-        return result
-
     
     @sync_to_async
     def get_message_data(self, group_id,user_id):
@@ -137,12 +111,22 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
             result = {'result': 'false', 'Message': 'admin id does not match', 'internalCode': '005'}
             return result
 
-        MessageModel_obj = MessageModel.objects.filter(sender_id=user_id)
+        MessageModel_obj = MessageModel.objects.filter(group_id=group_id, sender_id=user_id)
         print('MessageModel_obj', MessageModel_obj)
         message_list = []
         for msg in MessageModel_obj:
             msg_dic = {}
             msg_dic['message_id'] = str(msg.message_id)
+
+            if msg.group_id == None: 
+                msg_dic['group_id'] = ''
+            else:
+                msg_dic['group_id'] = str(msg.group_id)
+            if msg.team_id == None: 
+                msg_dic['team_id'] = ''
+            else:
+                msg_dic['team_id'] = str(msg.team_id)
+
             msg_dic['gif_url'] = msg.gif_url
             msg_dic['is_reply'] = msg.is_reply
             msg_dic['message'] = msg.message
@@ -161,5 +145,143 @@ class MessageConsumer(AsyncJsonWebsocketConsumer):
             result = {'result': 'true', 'Message': message_list, 'internalCode': '006'}
         else:
             result = {'result': 'false', 'Message': 'message_list is empty', 'internalCode': '007'}
+
+        return result
+
+
+
+class GroupConsumer(AsyncJsonWebsocketConsumer):
+    async def connect(self):
+        # self.group_id = self.scope['url_route']['kwargs']['group_id']
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
+        # print('group_id', self.group_id)
+        print('admin_id', self.user_id)
+        await self.accept()
+
+        self.room_group_name = 'chat_%s' % self.user_id
+
+        # Join room group
+        await self.channel_layer.group_add(
+        self.room_group_name,
+        self.channel_name
+        )
+
+        message_data = await self.get_group_data(self.user_id)
+        # message_data = {"result": "true", "Message": "connected"}
+        await self.send_json(message_data)
+
+
+    async def disconnect(self, event):
+        print("disconnected", event)
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+    )
+
+
+
+    # Receive message from WebSocket
+    async def receive_json(self, content):
+        print("CONTENT", content)
+        if content['command'] == "send":
+            group_id = content['group_id']
+
+            print('group_id', group_id)
+            
+            self.room_name = "room" + str(self.user_id)
+            message_data = await self.send_group_data(group_id)
+
+            await self.send_json(message_data)
+
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'recieve_group_message',
+                    'message': group_id
+                }
+            )
+
+
+
+    @sync_to_async
+    def send_group_data(self, group_id):
+        try:
+            i = GroupModel.objects.get(group_id=group_id)
+        except:
+            result = {'result': 'false', 'Message': 'group id does not match', 'internalCode': '004'}
+            return result
+        GroupModel_obj_dic = {}
+        GroupModel_obj_dic['group_id'] = str(i.group_id)
+        GroupModel_obj_dic['admin_id'] = str(i.admin_id)
+        GroupModel_obj_dic['group_profile'] = i.group_profile
+        GroupModel_obj_dic['group_name'] = i.group_name
+        GroupModel_obj_dic['group_type'] = i.group_type
+        GroupModel_obj_dic['is_channel'] = i.is_channel
+        GroupModel_obj_dic['type'] = i.type
+        members_list = []
+        for j in i.members:
+            members_list.append(str(j))
+        GroupModel_obj_dic['members'] = members_list
+        GroupModel_obj_dic['read_by'] = i.read_by
+        GroupModel_obj_dic['recent_message'] = i.recent_message
+
+        result = {'result': 'true', 'Message': GroupModel_obj_dic, 'internalCode': '003'}
+    
+        return result
+
+
+
+    @sync_to_async
+    def get_group_data(self,user_id):
+        try:
+            User_obj = UserModel.objects.get(user_id=user_id)
+        except:
+            result = {'result': 'false', 'Message': 'admin id does not match', 'internalCode': '005'}
+            return result
+
+        GroupModel_obj = GroupModel.objects.filter(admin_id=user_id)
+        GroupModel_obj_list = []
+        for i in GroupModel_obj:
+            members = i.members
+            if uuid.UUID(user_id) in members:
+                GroupModel_obj_dic = {}
+                GroupModel_obj_dic['group_id'] = str(i.group_id)
+                GroupModel_obj_dic['admin_id'] = str(i.admin_id)
+                GroupModel_obj_dic['group_profile'] = i.group_profile
+                GroupModel_obj_dic['group_name'] = i.group_name
+                GroupModel_obj_dic['group_type'] = i.group_type
+                GroupModel_obj_dic['is_channel'] = i.is_channel
+                GroupModel_obj_dic['type'] = i.type
+                members_list = []
+                for j in i.members:
+                    members_list.append(str(j))
+                GroupModel_obj_dic['members'] = members_list
+                GroupModel_obj_dic['read_by'] = i.read_by
+                GroupModel_obj_dic['recent_message'] = i.recent_message
+                GroupModel_obj_list.append(GroupModel_obj_dic)
+
+
+        # GroupModel_obj_list = []
+        # for i in GroupModel_obj:
+        #     GroupModel_obj_dic = {}
+        #     GroupModel_obj_dic['group_id'] = str(i.group_id)
+        #     GroupModel_obj_dic['admin_id'] = str(i.admin_id)
+        #     GroupModel_obj_dic['group_profile'] = i.group_profile
+        #     GroupModel_obj_dic['group_name'] = i.group_name
+        #     GroupModel_obj_dic['group_type'] = i.group_type
+        #     GroupModel_obj_dic['is_channel'] = i.is_channel
+        #     GroupModel_obj_dic['type'] = i.type
+        #     members_list = []
+        #     for j in i.members:
+        #         members_list.append(str(j))
+        #     GroupModel_obj_dic['members'] = members_list
+        #     GroupModel_obj_dic['read_by'] = i.read_by
+        #     GroupModel_obj_dic['recent_message'] = i.recent_message
+        #     GroupModel_obj_list.append(GroupModel_obj_dic)
+
+        if GroupModel_obj_list:
+            result = {'result': 'true', 'Message': GroupModel_obj_list, 'internalCode': '006'}
+        else:
+            result = {'result': 'false', 'Message': 'GroupModel_obj_list is empty', 'internalCode': '007'}
 
         return result

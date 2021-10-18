@@ -28,11 +28,11 @@ class UserModel(DjangoCassandraModel):
                                             default=list,required=False), default=dict,required=False)
     blocked_by = columns.UUID(required=False) #UserModel
 
-    created_at = columns.DateTime(default=datetime.datetime.now())
+    created_at = columns.DateTime(default=datetime.datetime.utcnow())
     created_by = columns.UUID(required=False) #UserModel
-    updated_at = columns.DateTime(default=datetime.datetime.now())
+    updated_at = columns.DateTime(default=datetime.datetime.utcnow())
     updated_by = columns.UUID(required=False) #UserModel
-    deleted_at = columns.DateTime(default=datetime.datetime.now())
+    deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
     
 
@@ -52,20 +52,18 @@ class GroupModel(DjangoCassandraModel):
     team_id = columns.UUID(required=False)  #TeamModel
     type = columns.Text(required=False)
 
-    created_at = columns.DateTime(default=datetime.datetime.now())
+    created_at = columns.DateTime(default=datetime.datetime.utcnow())
     created_by = columns.UUID(required=False) #UserModel
-    updated_at = columns.DateTime(default=datetime.datetime.now())
+    updated_at = columns.DateTime(default=datetime.datetime.utcnow())
     updated_by = columns.UUID(required=False) #UserModel
-    deleted_at = columns.DateTime(default=datetime.datetime.now())
+    deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
     
 
 class MessageModel(DjangoCassandraModel):
     message_id = columns.UUID(primary_key=True, default=uuid.uuid4)
-    # new 
-    # group_id = columns.UUID(required=False) #GroupModel
-    # team_id = columns.UUID(required=False) #TeamModel
-    # new 
+    group_id = columns.UUID(required=False) #GroupModel
+    team_id = columns.UUID(required=False) #TeamModel
     file = columns.List(value_type=columns.Text, default=list,required=False)
     gif_url = columns.Text(required=False)
     image = columns.List(value_type=columns.Text, default=list,required=False)
@@ -83,11 +81,11 @@ class MessageModel(DjangoCassandraModel):
     time = columns.DateTime(required=False)
     type = columns.Text(required=False)
 
-    created_at = columns.DateTime(default=datetime.datetime.now())
+    created_at = columns.DateTime(default=datetime.datetime.utcnow())
     created_by = columns.UUID(required=False) #UserModel
-    updated_at = columns.DateTime(default=datetime.datetime.now())
+    updated_at = columns.DateTime(default=datetime.datetime.utcnow())
     updated_by = columns.UUID(required=False) #UserModel
-    deleted_at = columns.DateTime(default=datetime.datetime.now())
+    deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
     
 
@@ -97,11 +95,11 @@ class BadgeModel(DjangoCassandraModel):
     user_id = columns.UUID(required=False) #UserModel
     badge = columns.Integer(required=False)
 
-    created_at = columns.DateTime(default=datetime.datetime.now())
+    created_at = columns.DateTime(default=datetime.datetime.utcnow())
     created_by = columns.UUID(required=False) #UserModel
-    updated_at = columns.DateTime(default=datetime.datetime.now())
+    updated_at = columns.DateTime(default=datetime.datetime.utcnow())
     updated_by = columns.UUID(required=False) #UserModel
-    deleted_at = columns.DateTime(default=datetime.datetime.now())
+    deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
     
 
@@ -114,11 +112,11 @@ class TeamModel(DjangoCassandraModel):
     profile = columns.Text(required=False)
     time = columns.DateTime(required=False)
 
-    created_at = columns.DateTime(default=datetime.datetime.now())
+    created_at = columns.DateTime(default=datetime.datetime.utcnow())
     created_by = columns.UUID(required=False) #UserModel
-    updated_at = columns.DateTime(default=datetime.datetime.now())
+    updated_at = columns.DateTime(default=datetime.datetime.utcnow())
     updated_by = columns.UUID(required=False) #UserModel
-    deleted_at = columns.DateTime(default=datetime.datetime.now())
+    deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
 
 

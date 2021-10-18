@@ -31,6 +31,10 @@ urlpatterns = [
     path('create_group', CreateGroupView.as_view()),
     path('update_group/<str:id>/', UpdateGroupView.as_view()),
 
+    # api  Team
+    path('create_team', CreateTeamView.as_view()),
+    path('update_team/<str:id>/', UpdateTeamView.as_view()),
+
     # api  message
     path('create_message', CreateMessageView.as_view()),
     path('update_message/<str:id>/', UpdateMessageView.as_view()),

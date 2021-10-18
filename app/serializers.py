@@ -44,7 +44,22 @@ class CreateGroupSerializer(Serializer):
                   'is_channel', 'type']
 
 
+class CreateTeamSerializer(Serializer):
+
+    admin_id = serializers.CharField(required=True)
+    is_public = serializers.BooleanField(required=True)
+    team_name = serializers.CharField(required=True)
+    profile = serializers.CharField(required=True)
+
+    class Meta:
+        fields = ['admin_id', 'is_public', 'team_name',  'profile']
+                 
+
+
 class MessageSerializer(Serializer):
+
+    group_id = serializers.CharField(required=False)
+    team_id = serializers.CharField(required=False)
 
     gif_url = serializers.CharField(required=True)
     is_reply = serializers.BooleanField(required=True)
@@ -56,5 +71,5 @@ class MessageSerializer(Serializer):
     type = serializers.CharField(required=True)
 
     class Meta:
-        fields = ['gif_url', 'is_reply', 'message',  'sender_id',
+        fields = ['group_id', 'team_id', 'gif_url', 'is_reply', 'message',  'sender_id',
                   'sender_name', 'is_deleted', 'delete_type', 'type']

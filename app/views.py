@@ -42,7 +42,7 @@ from rest_framework.generics import GenericAPIView, ListAPIView, CreateAPIView, 
 from rest_framework.permissions import AllowAny
 import json
 from . consumers import MessageConsumer
-
+import requests
 
 class TestView(GenericAPIView):
 
@@ -178,7 +178,13 @@ class UserUpdateView(GenericAPIView):
 
         id = self.kwargs.get('id')
         print('id', id)
-        UserModel_obj = UserModel.objects.get(user_id=id)
+        try:
+            UserModel_obj = UserModel.objects.get(user_id=id)
+        except:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                "Message": "User already deleted or id not found"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
         print('UserModel_obj', UserModel_obj)
         
         serializer = UserRegisterSerializer(data=request.data)
@@ -225,7 +231,13 @@ class UserUpdateView(GenericAPIView):
 
         id = self.kwargs.get('id')
         print('id', id)
-        UserModel_obj = UserModel.objects.get(user_id=id)
+        try:
+            UserModel_obj = UserModel.objects.get(user_id=id)
+        except:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                "Message": "User already deleted or id not found"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
         print('UserModel_obj', UserModel_obj)
         UserModel_obj.delete()
         
@@ -315,7 +327,12 @@ class UpdateGroupView(GenericAPIView):
 
         id = self.kwargs.get('id')
         print('id', id)
-        GroupModel_obj = GroupModel.objects.get(group_id=id)
+        try:
+            GroupModel_obj = GroupModel.objects.get(group_id=id)
+        except:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                "Message": "group already deleted or id not found"},
+                        status=status.HTTP_400_BAD_REQUEST)
         print('GroupModel_obj', GroupModel_obj)
         
         
@@ -357,12 +374,149 @@ class UpdateGroupView(GenericAPIView):
 
         id = self.kwargs.get('id')
         print('id', id)
-        GroupModel_obj = GroupModel.objects.get(group_id=id)
+        try:
+            GroupModel_obj = GroupModel.objects.get(group_id=id)
+        except:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                "Message": "group already deleted or id not found"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
         print('GroupModel_obj', GroupModel_obj)
         GroupModel_obj.delete()
         
         return Response(data={"Status": status.HTTP_200_OK,
                                 "Message": "Group deleted"},
+                        status=status.HTTP_200_OK)
+
+
+class CreateTeamView(GenericAPIView):
+    permission_classes = [AllowAny]
+    queryset = TeamModel.objects.all()
+    serializer_class = CreateTeamSerializer
+
+
+    def get(self, request, *args, **kwargs):
+        # query = UserModel.objects.filter(user_id='5da73767-1cff-4214-a441-eb7fc1dd8128')
+        query = TeamModel.objects.all()
+        team_list = []
+
+        for team in query:
+            team_dic = {}
+            team_dic['team_id'] = team.team_id
+            team_dic['admin_id'] = team.admin_id
+            team_dic['is_public'] = team.is_public
+            team_dic['team_name'] = team.team_name
+            team_dic['profile'] = team.profile
+            team_dic['members'] = team.members
+            team_dic['created_at'] = team.created_at
+            team_dic['updated_at'] = team.updated_at
+            team_dic['deleted_at'] = team.deleted_at
+            team_list.append(team_dic)
+        
+        return Response(
+            data={
+                "Status":status.HTTP_200_OK,
+                "Message":f"team list",
+                "Results": team_list},
+            status=status.HTTP_200_OK
+        )
+
+    def post(self, request, *args, **kwargs):
+        
+        serializer = CreateTeamSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                  "Message": serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # try:
+        admin_id = serializer.validated_data['admin_id']
+        is_public = serializer.validated_data['is_public']
+        team_name = serializer.validated_data['team_name']
+        profile = serializer.validated_data['profile']
+      
+
+        admin_id = uuid.UUID(admin_id)
+
+        members =  [admin_id, admin_id, admin_id]
+      
+
+        TeamModel.objects.create(admin_id=admin_id, is_public=is_public,team_name=team_name,
+                        profile=profile, members=members)
+           
+        return Response(data={"Status": status.HTTP_201_CREATED,
+                                "Message": "Team created",
+                                "Results": serializer.data},
+                        status=status.HTTP_201_CREATED)
+      
+
+
+class UpdateTeamView(GenericAPIView):
+    permission_classes = [AllowAny]
+    queryset = TeamModel.objects.all()
+    serializer_class = CreateTeamSerializer
+
+    def put(self, request, *args, **kwargs):
+
+        id = self.kwargs.get('id')
+        print('id', id)
+        try:
+            TeamModel_obj = TeamModel.objects.get(team_id=id)
+        except:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                "Message": "team already deleted or id not found"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+        print('TeamModel_obj', TeamModel_obj)
+        
+        
+        serializer = CreateTeamSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                  "Message": serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # try:
+        admin_id = serializer.validated_data['admin_id']
+        is_public = serializer.validated_data['is_public']
+        team_name = serializer.validated_data['team_name']
+        profile = serializer.validated_data['profile']
+      
+
+        admin_id = uuid.UUID(admin_id)
+
+        members =  [admin_id, admin_id, admin_id]
+
+        updated_at = datetime.datetime.now()
+
+
+        TeamModel.objects.filter(team_id=id).update(admin_id=admin_id, is_public=is_public,team_name=team_name,
+                        profile=profile, members=members, updated_at=updated_at)
+           
+        return Response(data={"Status": status.HTTP_200_OK,
+                                "Message": "Team updated",
+                                "Results": serializer.data},
+                        status=status.HTTP_200_OK)
+      
+    
+    def delete(self, request, *args, **kwargs):
+
+        id = self.kwargs.get('id')
+        print('id', id)
+        try:
+            TeamModel_obj = TeamModel.objects.get(team_id=id)
+        except:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                "Message": "team already deleted or id not found"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+        print('TeamModel_obj', TeamModel_obj)
+        TeamModel_obj.delete()
+        
+        return Response(data={"Status": status.HTTP_200_OK,
+                                "Message": "team deleted"},
                         status=status.HTTP_200_OK)
 
 
@@ -380,6 +534,8 @@ class CreateMessageView(GenericAPIView):
         for msg in query:
             msg_dic = {}
             msg_dic['message_id'] = msg.message_id
+            msg_dic['group_id'] = msg.group_id
+            msg_dic['team_id'] = msg.team_id
             msg_dic['gif_url'] = msg.gif_url
             msg_dic['is_reply'] = msg.is_reply
             msg_dic['message'] = msg.message
@@ -392,6 +548,9 @@ class CreateMessageView(GenericAPIView):
             msg_dic['image'] = msg.image
             msg_dic['reply_data'] = msg.reply_data
             msg_dic['read_by'] = msg.read_by
+            msg_dic['created_at'] = msg.created_at
+            msg_dic['updated_at'] = msg.updated_at
+            msg_dic['deleted_at'] = msg.deleted_at
             message_list.append(msg_dic)
         
         return Response(
@@ -421,23 +580,78 @@ class CreateMessageView(GenericAPIView):
         delete_type = serializer.validated_data['delete_type']
         type1 = serializer.validated_data['type']
 
+        try:
+            group_id = serializer.validated_data['group_id']
+        except:
+            pass
+
+        try:
+            team_id = serializer.validated_data['team_id']
+        except:
+            pass
+
+
         sender_id = uuid.UUID(sender_id)
 
         file = ["fileUrl","fileUrl","fileUrl"]
         image = ["imageUrl","imageUrl","imageUrl"]		
-        reply_data  = {"parentId":"userId", "parentMessage": "message", 
-                        "parentMessageId": "messageId", "time": "timestamp"}	
+        reply_data  = {"parent_id":"userId", "parent_message": "message", 
+                        "parent_message_id": "messageId", "time": "timestamp"}	
         
         read_by = [{"read_at": "timestamp", "user_id": str(sender_id)},
                     {"read_at": "timestamp", "user_id": str(sender_id)}]
 
-        # MessageModel.objects.create(gif_url=gif_url, is_reply=is_reply, message=message,
-        #                 sender_id=sender_id, sender_name=sender_name, is_deleted=is_deleted,
-        #                 delete_type=delete_type, type=type1, file=file, image=image,
-        #                 reply_data=reply_data, read_by=read_by)
+        MessageModel_obj = MessageModel.objects.create(gif_url=gif_url, is_reply=is_reply, message=message,
+                        sender_id=sender_id, sender_name=sender_name, is_deleted=is_deleted,
+                        delete_type=delete_type, type=type1, file=file, image=image,
+                        reply_data=reply_data, read_by=read_by)
 
-        content = {"command":"send",
-                        "message":"d9c194b6-ebfe-42b6-86c3-957edaefd37c"}
+        if group_id:
+            group_id = uuid.UUID(group_id)
+            MessageModel_obj.group_id=group_id
+            MessageModel_obj.save()
+        elif team_id:
+            team_id = uuid.UUID(team_id)
+            MessageModel_obj.team_id=team_id
+            MessageModel_obj.save()
+
+        GroupModel_obj = GroupModel.objects.get(group_id=group_id)
+        for i in GroupModel_obj.members:
+            UserModel_obj = UserModel.objects.get(user_id=i)
+            is_online = UserModel_obj.is_online
+            if is_online == False:
+                user_data ={
+                        "to": UserModel_obj.deviceToken,
+                        "priority": "high",
+                        "data": {
+                            "payload": {
+                                "type": "Admin"
+                            },
+                            "title": "title",
+                            "subtitle": message
+                        },
+                        "notification": {
+                            "body": message,
+                            "title": "title",
+                            "sound": "default",
+                            # "badge": str(user.badge_count)
+                        }
+                    }
+
+                data_url = 'https://fcm.googleapis.com/fcm/send'
+                    # access_token = 'AAAAUHuO360:APA91bFH3VwA9c67fNYTAd89ylCJ4XnKirlCTM4Ah3iw5ICRabgjsZILN_la9QLPv9BASwwdyFC9Fhb4MgU3eOHAdPldkW7Y8QWKic1Vp1ED4wa3mnKmO3gGfq8MqVNvAMZ7aMMC9gtb'
+                data_request = requests.post(url=data_url,
+                                                headers={
+                                                    'Content-Type': 'application/json',
+                                                   'Authorization': 'key=AAAAUHuO360:APA91bFH3VwA9c67fNYTAd89ylCJ4XnKirlCTM4Ah3iw5ICRabgjsZILN_la9QLPv9BASwwdyFC9Fhb4MgU3eOHAdPldkW7Y8QWKic1Vp1ED4wa3mnKmO3gGfq8MqVNvAMZ7aMMC9gtb'},
+                                               data=json.dumps(user_data))
+
+
+
+
+
+        # content = {"command":"send",
+        #                 "message":"d9c194b6-ebfe-42b6-86c3-957edaefd37c"}
 
         # from websocket import create_connection
         # ws = create_connection("ws://127.0.0.1:8010/ws/7dcdbe64-0f2f-4a7c-8fdd-8d7ee35bfe99/7dcdbe64-0f2f-4a7c-8fdd-8d7ee35bfe99/")
@@ -469,7 +683,13 @@ class UpdateMessageView(GenericAPIView):
 
         id = self.kwargs.get('id')
         print('id', id)
-        MessageModel_obj = MessageModel.objects.get(message_id=id)
+        try:
+            MessageModel_obj = MessageModel.objects.get(message_id=id)
+        except:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                "Message": "Message already deleted or id not found"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
         print('MessageModel_obj', MessageModel_obj)
         
         
@@ -515,7 +735,13 @@ class UpdateMessageView(GenericAPIView):
 
         id = self.kwargs.get('id')
         print('id', id)
-        MessageModel_obj = MessageModel.objects.get(message_id=id)
+        try:
+            MessageModel_obj = MessageModel.objects.get(message_id=id)
+        except:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                "Message": "Message already deleted or id not found"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
         print('MessageModel_obj', MessageModel_obj)
         MessageModel_obj.delete()
         
