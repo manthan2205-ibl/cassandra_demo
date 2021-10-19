@@ -85,6 +85,22 @@ CHANNEL_LAYERS = {
     },
 }
 
+REST_FRAMEWORK = {
+    # 'DATETIME_INPUT_FORMATS': ['%Y-%m-%d%H:%M:%S%z',],
+    # 'DATE_INPUT_FORMATS': [("%Y-%m-%d"),],
+
+    # 'DEFAULT_AUTHENTICATION_CLASSES': [
+    #     'app.authentication.MyOwnTokenAuthentication',
+    # ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+
+    'DEFAULT_PAGINATION_CLASS': 'app.pagination.StandardResultsSetPagination',
+    'PAGE_SIZE': 10
+}
+
+
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases

@@ -13,6 +13,17 @@ class ExampleModelerializer(DjangoCassandraModelSerializer):
         fields = ['example_type', 'description']
 
 
+
+# Login
+class UserLoginSerializer(Serializer):
+
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True)
+
+    class Meta:
+        fields = ['email', 'password']
+
+
 # Register
 class UserRegisterSerializer(Serializer):
 

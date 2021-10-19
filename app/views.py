@@ -102,6 +102,77 @@ class TestView(GenericAPIView):
         )
  
  
+class UserLoginView(GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserLoginSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                  "Message": serializer.errors},
+                            status= status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+
+        if User.objects.filter(email=email, deleted_by__isnull=False).exists():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                             "Message": "Your Account has been deactivated!"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if not User.objects.filter(email=email, deleted_by__isnull=True).exists():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                             "Message": "The email address you entered is invalid, Please recheck."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email=email, deleted_by__isnull=True).exists():
+            # hash
+            # user = User.objects.get(email=email)
+            # new_password = check_password(password, user.password)
+            # print(new_password)
+            # if new_password == False:
+            #     return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+            #                                  "Message": "The password does not match, Please recheck."},
+            #                                 status=status.HTTP_400_BAD_REQUEST)
+            # hash
+            if not User.objects.filter(email=email, password=password, deleted_by__isnull=True).exists():
+                return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                 "Message": "The password you entered is invalid, Please recheck."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email=email, password=password, deleted_by__isnull=True).exists():
+            user = User.objects.filter(email=email, password=password).last()
+
+            # device_token
+            device_token = serializer.validated_data['device_token']
+            User.objects.filter(email=email, password=password, deleted_by__isnull=True).update(device_token=device_token)
+
+            # token
+            letters = string.ascii_letters
+            random_string = ''.join(random.choice(letters) for i in range(15))
+            payload = {'id': user.id, 'email': email, 'random_string': random_string }
+            encoded_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+            UserToken.objects.create(user=user, token=encoded_token)
+            # login
+            login(request, user)
+            serializer = UserUpdateSerializer(user)
+            return Response(data={"Status": status.HTTP_200_OK,
+                                  "Message": "User successfully login, Token Generated.",
+                             "Results": {'id': user.id,
+                                         'token': encoded_token,
+                                         'device_token': device_token,
+                                         'user_data':serializer.data}},
+                            status= status.HTTP_200_OK)
+        else:
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                 "Message": "The email address or password you entered is invalid. Please try again."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 class UserRegisterView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -209,6 +280,7 @@ class UserUpdateView(GenericAPIView):
         deviceToken = json.loads(deviceToken)
         print('deviceToken', deviceToken)
         print(type(deviceToken))
+        updated_at = datetime.datetime.utcnow()
 
         # profile = data['profile'].read()
         # print('profile', profile)
@@ -217,7 +289,8 @@ class UserUpdateView(GenericAPIView):
         # deviceToken = {"mobile":["token","token"], "desktop":["token","token"],"web":["token","token"]}
 
         UserModel.objects.filter(user_id=id).update(name=name, email=email,profile_url=profile_url,
-                        status=statuss, position=position, is_online=is_online,deviceToken=deviceToken)
+                        status=statuss, position=position, is_online=is_online,deviceToken=deviceToken,
+                        updated_at=updated_at)
            
         # serializer.save()
         return Response(data={"Status": status.HTTP_200_OK,
@@ -360,9 +433,11 @@ class UpdateGroupView(GenericAPIView):
                         "senderId": str(admin_id), 
                         "senderName": "name"}
 
+        updated_at = datetime.datetime.utcnow()
+
         GroupModel.objects.filter(group_id=id).update(admin_id=admin_id, group_profile=group_profile,group_name=group_name,
                         group_type=group_type, is_channel=is_channel, type=type1,
-                        members=members,read_by=read_by, recent_message=recent_message)
+                        members=members,read_by=read_by, recent_message=recent_message, updated_at=updated_at)
            
         return Response(data={"Status": status.HTTP_200_OK,
                                 "Message": "Group updated",
