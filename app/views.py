@@ -192,28 +192,8 @@ class OTPVerifyView(GenericAPIView):
                              "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if UserModel.objects.filter(email=email).exists():
-            user = UserModel.objects.filter(email=email).first()
-
-            token_type = serializer.validated_data['token_type']
-            device_token = serializer.validated_data['device_token']
-            deviceToken = user.deviceToken    
-            token_type_list = deviceToken[str(token_type)] 
-            token_type_list.append(str(device_token))
-            deviceToken[str(token_type)] = token_type_list
-            user.deviceToken = deviceToken   
-            user.save() 
-
-            print('deviceToken', deviceToken)
-
-            # token
-            letters = string.ascii_letters
-            random_string = ''.join(random.choice(letters) for i in range(15))
-            payload = {'user_id': str(user.user_id), 'email': email, 'random_string': random_string }
-            encoded_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-
-            encoded_token= encoded_token.decode("utf-8") 
-            print('encoded_token', str(encoded_token))
+        if UserModel.objects.filter(email=email,deleted_record=False).exists():
+            user = UserModel.objects.filter(email=email,deleted_record=False).first()
 
             otp = serializer.validated_data['otp']
             database_OTP = user.otp 
@@ -238,6 +218,25 @@ class OTPVerifyView(GenericAPIView):
                                         "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
 
+            token_type = serializer.validated_data['token_type']
+            device_token = serializer.validated_data['device_token']
+            deviceToken = user.deviceToken    
+            token_type_list = deviceToken[str(token_type)] 
+            token_type_list.append(str(device_token))
+            deviceToken[str(token_type)] = token_type_list
+            user.deviceToken = deviceToken   
+            user.save() 
+
+            print('deviceToken', deviceToken)
+
+            # token
+            letters = string.ascii_letters
+            random_string = ''.join(random.choice(letters) for i in range(15))
+            payload = {'user_id': str(user.user_id), 'email': email, 'random_string': random_string }
+            encoded_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+            encoded_token= encoded_token.decode("utf-8") 
+            print('encoded_token', str(encoded_token))
 
             UserTokenModel.objects.create(user_id=user.user_id, token=encoded_token)
             serializer = UserRegisterSerializer(user)
@@ -255,11 +254,6 @@ class OTPVerifyView(GenericAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         
-
-            
-
-
-
 
 class LogoutView(GenericAPIView):
     authentication_classes = [MyOwnTokenAuthentication]

@@ -96,8 +96,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 
-    'DEFAULT_PAGINATION_CLASS': 'app.pagination.StandardResultsSetPagination',
-    'PAGE_SIZE': 10,
+    # 'DEFAULT_PAGINATION_CLASS': 'app.utils.CustomPagination',
+    # 'PAGE_SIZE': 3,
     'EXCEPTION_HANDLER': 'app.utils.custom_exception_handler'
 }
 
