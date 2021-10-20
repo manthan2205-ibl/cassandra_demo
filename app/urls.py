@@ -24,6 +24,9 @@ urlpatterns = [
     # path('overview', overview, name='overview'),
 
     # api  User
+    path('user_login', UserLoginView.as_view()),
+    path('user_logout', LogoutView.as_view()),
+
     path('user_register', UserRegisterView.as_view()),
     path('user_update/<str:id>/', UserUpdateView.as_view()),
 

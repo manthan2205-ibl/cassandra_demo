@@ -113,6 +113,8 @@ REST_FRAMEWORK = {
 # }
 # keyspaces
 
+CASSANDRA_FALLBACK_ORDER_BY_PYTHON = True
+
 from cassandra import ConsistencyLevel
 DATABASES = {
         'default': {

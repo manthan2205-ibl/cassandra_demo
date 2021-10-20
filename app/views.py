@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.utils.translation import deactivate
 from . models import*
 from . serializers import *
-import datetime
+import datetime, string, random
 # Create your views here.
 
 def homepage(request):
@@ -35,14 +35,18 @@ def homepage(request):
 from rest_framework.viewsets import ViewSet, ModelViewSet
 from rest_framework.generics import ListCreateAPIView, ListAPIView, GenericAPIView
 from rest_framework.response import Response
-from rest_framework import serializers, status
+from rest_framework import authentication, serializers, status
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView, ListAPIView, CreateAPIView, DestroyAPIView, \
                                     ListCreateAPIView, GenericAPIView
 from rest_framework.permissions import AllowAny
-import json
+import json, jwt
 from . consumers import MessageConsumer
 import requests
+from django.conf import settings
+from . authentication import MyOwnTokenAuthentication
+from . pagination import *
+from . utils import *
 
 class TestView(GenericAPIView):
 
@@ -115,19 +119,16 @@ class UserLoginView(GenericAPIView):
                             status= status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
+        
+        # UserModel_obj = UserModel.objects.exclude(deleted_by='isnull')
+        # print('UserModel_obj', UserModel_obj)
 
-        if User.objects.filter(email=email, deleted_by__isnull=False).exists():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                             "Message": "Your Account has been deactivated!"},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        if not User.objects.filter(email=email, deleted_by__isnull=True).exists():
+        if not UserModel.objects.filter(email=email,deleted_record=False).exists():
             return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
                              "Message": "The email address you entered is invalid, Please recheck."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if User.objects.filter(email=email, deleted_by__isnull=True).exists():
+        if UserModel.objects.filter(email=email).exists():
             # hash
             # user = User.objects.get(email=email)
             # new_password = check_password(password, user.password)
@@ -137,39 +138,93 @@ class UserLoginView(GenericAPIView):
             #                                  "Message": "The password does not match, Please recheck."},
             #                                 status=status.HTTP_400_BAD_REQUEST)
             # hash
-            if not User.objects.filter(email=email, password=password, deleted_by__isnull=True).exists():
-                return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                 "Message": "The password you entered is invalid, Please recheck."},
-                                status=status.HTTP_400_BAD_REQUEST)
+          
+            user = UserModel.objects.filter(email=email).first()
 
-        if User.objects.filter(email=email, password=password, deleted_by__isnull=True).exists():
-            user = User.objects.filter(email=email, password=password).last()
+            deleted_by = user.deleted_by
+            if deleted_by == None:
+                print('deleted_by', deleted_by)
 
-            # device_token
+            token_type = serializer.validated_data['token_type']
             device_token = serializer.validated_data['device_token']
-            User.objects.filter(email=email, password=password, deleted_by__isnull=True).update(device_token=device_token)
+            deviceToken = user.deviceToken    
+            token_type_list = deviceToken[str(token_type)] 
+            token_type_list.append(str(device_token))
+            deviceToken[str(token_type)] = token_type_list
+            user.deviceToken = deviceToken   
+            user.save() 
+
+            print('deviceToken', deviceToken)
 
             # token
             letters = string.ascii_letters
             random_string = ''.join(random.choice(letters) for i in range(15))
-            payload = {'id': user.id, 'email': email, 'random_string': random_string }
+            payload = {'user_id': str(user.user_id), 'email': email, 'random_string': random_string }
             encoded_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
 
-            UserToken.objects.create(user=user, token=encoded_token)
-            # login
-            login(request, user)
-            serializer = UserUpdateSerializer(user)
+            encoded_token= encoded_token.decode("utf-8") 
+            print('encoded_token', str(encoded_token))
+
+            UserTokenModel.objects.create(user_id=user.user_id, token=encoded_token)
+            serializer = UserRegisterSerializer(user)
             return Response(data={"Status": status.HTTP_200_OK,
                                   "Message": "User successfully login, Token Generated.",
-                             "Results": {'id': user.id,
+                             "Results": {'id': str(user.user_id),
                                          'token': encoded_token,
-                                         'device_token': device_token,
+                                        #  'device_token': device_token,
                                          'user_data':serializer.data}},
                             status= status.HTTP_200_OK)
         else:
             return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
                  "Message": "The email address or password you entered is invalid. Please try again."},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(GenericAPIView):
+    authentication_classes = [MyOwnTokenAuthentication]
+    serializer_class = UserLogoutSerializer
+
+    def get(self, request, *args, **kwargs):
+        try:
+            token = Authenticate(self, request)
+            # print('token', token)
+            user = request.user
+            serializer = self.get_serializer(data=request.data)
+
+            if not serializer.is_valid():
+                return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                    "Message": serializer.errors},
+                                status= status.HTTP_400_BAD_REQUEST)
+
+            token_type = serializer.validated_data['token_type']
+            device_token = serializer.validated_data['device_token']
+
+            deviceToken = user.deviceToken    
+            token_type_list = deviceToken[str(token_type)] 
+            token_type_list.remove(str(device_token))
+            deviceToken[str(token_type)] = token_type_list
+            user.deviceToken = deviceToken   
+            user.save()
+            try:
+                token= token.decode("utf-8") 
+                user_token = UserTokenModel.objects.get(user_id=request.user.user_id, token=token)
+                print('user_token', user_token)
+                user_token.delete()
+            except:
+                return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                      "Message": 'Already Logged Out.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            
+            
+
+            return Response(data={"Status": status.HTTP_200_OK,
+                                  "Message": "User Logged Out."},
+                            status=status.HTTP_200_OK)
+        except:
+            return Response(data={"Status":status.HTTP_400_BAD_REQUEST,
+                                  "Message":'Already Logged Out.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
@@ -182,7 +237,10 @@ class UserRegisterView(GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         # query = UserModel.objects.filter(user_id='5da73767-1cff-4214-a441-eb7fc1dd8128')
-        query = UserModel.objects.all()
+        query = UserModel.objects.filter(deleted_record=False).order_by('-created_at')
+        # for i in query:
+        #     i.deleted_record=False
+        #     i.save()
         user_list = []
         for user in query:
             user_dic = {}
@@ -191,6 +249,7 @@ class UserRegisterView(GenericAPIView):
             user_dic['profile_url'] = user.profile_url
             user_dic['status'] = user.status
             user_dic['is_online'] = user.is_online
+            user_dic['deleted_record'] = user.deleted_record
             user_dic['position'] = user.position
             user_dic['deviceToken'] = user.deviceToken
             user_list.append(user_dic)
@@ -211,26 +270,48 @@ class UserRegisterView(GenericAPIView):
             return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
                                   "Message": serializer.errors},
                             status=status.HTTP_400_BAD_REQUEST)
+        
+        if UserModel.objects.filter(email=serializer.validated_data['email'],deleted_record=False).exists():
+            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                  "Message": "User Email Already Registered",},
+                            status=status.HTTP_400_BAD_REQUEST)
+
 
         # try:
         name = serializer.validated_data['name']
         email = serializer.validated_data['email']
         profile_url = serializer.validated_data['profile_url']
         statuss = serializer.validated_data['status']
-        is_online = serializer.validated_data['is_online']
+        # is_online = serializer.validated_data['is_online']
         position = serializer.validated_data['position']
 
-        data=request.data
-        deviceToken = data['deviceToken']
+        # token_type = serializer.validated_data['token_type']
+        # device_token = serializer.validated_data['device_token']
         
-        deviceToken = json.loads(deviceToken)
-        print('deviceToken', deviceToken)
-        print(type(deviceToken))
+
+        # data=request.data
+        # deviceToken = data['deviceToken']
+        
+        # deviceToken = json.loads(deviceToken)
+        # print('deviceToken', deviceToken)
+        # print(type(deviceToken))
 
         # deviceToken = {"mobile":["token","token"], "desktop":["token","token"],"web":["token","token"]}
+        deviceToken = {"mobile":[], "desktop":[],"web":[]}
 
-        UserModel.objects.create(name=name, email=email,profile_url=profile_url,
-                        status=statuss, position=position, is_online=is_online,deviceToken=deviceToken)
+        UserModel_obj = UserModel.objects.create(name=name, email=email,profile_url=profile_url,
+                        status=statuss, position=position,deviceToken=deviceToken)
+
+        # deviceToken = UserModel_obj.deviceToken    
+        # token_type_list = deviceToken[str(token_type)] 
+        # token_type_list.append(str(device_token))
+        # deviceToken[str(token_type)] = token_type_list
+        # UserModel_obj.deviceToken = deviceToken   
+        # UserModel_obj.save() 
+
+        # print('deviceToken', deviceToken)
+
+
            
         return Response(data={"Status": status.HTTP_201_CREATED,
                                 "Message": "User Registered",
@@ -241,6 +322,7 @@ class UserRegisterView(GenericAPIView):
 
 class UserUpdateView(GenericAPIView):
     permission_classes = [AllowAny]
+    authentication_classes = [MyOwnTokenAuthentication]
     queryset = UserModel.objects.all()
     serializer_class = UserRegisterSerializer
 
@@ -274,12 +356,16 @@ class UserUpdateView(GenericAPIView):
         is_online = serializer.validated_data['is_online']
         position = serializer.validated_data['position']
 
-        data=request.data
-        deviceToken = data['deviceToken']
+        token_type = serializer.validated_data['token_type']
+        device_token = serializer.validated_data['device_token']
+
+        # data=request.data
+        # deviceToken = data['deviceToken']
         
-        deviceToken = json.loads(deviceToken)
-        print('deviceToken', deviceToken)
-        print(type(deviceToken))
+        # deviceToken = json.loads(deviceToken)
+        # print('deviceToken', deviceToken)
+        # print(type(deviceToken))
+
         updated_at = datetime.datetime.utcnow()
 
         # profile = data['profile'].read()
@@ -288,11 +374,21 @@ class UserUpdateView(GenericAPIView):
 
         # deviceToken = {"mobile":["token","token"], "desktop":["token","token"],"web":["token","token"]}
 
-        UserModel.objects.filter(user_id=id).update(name=name, email=email,profile_url=profile_url,
-                        status=statuss, position=position, is_online=is_online,deviceToken=deviceToken,
+        UserModel.objects.filter(user_id=id,deleted_record=False).update(name=name, 
+                            email=email,profile_url=profile_url,
+                        status=statuss, position=position, is_online=is_online,
                         updated_at=updated_at)
            
         # serializer.save()
+
+        # deviceToken = UserModel_obj.deviceToken    
+        # token_type_list = deviceToken[str(token_type)] 
+        # token_type_list.append(str(device_token))
+        # deviceToken[str(token_type)] = token_type_list
+        # UserModel_obj.deviceToken = deviceToken   
+        # UserModel_obj.save() 
+
+        # print('deviceToken', deviceToken)
         return Response(data={"Status": status.HTTP_200_OK,
                                 "Message": "User update",
                                 "Results": serializer.data},
@@ -322,15 +418,23 @@ class UserUpdateView(GenericAPIView):
 
 
 class CreateGroupView(GenericAPIView):
-    permission_classes = [AllowAny]
+    # permission_classes = [AllowAny]
+    authentication_classes = [MyOwnTokenAuthentication]
+    # pagination_class = StandardResultsSetPagination
     queryset = GroupModel.objects.all()
     serializer_class = CreateGroupSerializer
 
 
     def get(self, request, *args, **kwargs):
-        # query = UserModel.objects.filter(user_id='5da73767-1cff-4214-a441-eb7fc1dd8128')
-        query = GroupModel.objects.all()
+        # query = GroupModel.objects.filter(is_channel=True).order_by('-created_at')
+        query = GroupModel.objects.filter(deleted_record=False).order_by('-created_at')
+        # for i in query:
+        #     i.deleted_record=False
+        #     i.save()
         group_list = []
+
+        # user = request.user
+        # print('user', user.user_id)
 
         for grp in query:
             grp_dic = {}
@@ -344,6 +448,7 @@ class CreateGroupView(GenericAPIView):
             grp_dic['members'] = grp.members
             grp_dic['read_by'] = grp.read_by
             grp_dic['recent_message'] = grp.recent_message
+            grp_dic['deleted_record'] = grp.deleted_record
             group_list.append(grp_dic)
         
         return Response(
@@ -393,6 +498,7 @@ class CreateGroupView(GenericAPIView):
 
 class UpdateGroupView(GenericAPIView):
     permission_classes = [AllowAny]
+    authentication_classes = [MyOwnTokenAuthentication]
     queryset = GroupModel.objects.all()
     serializer_class = CreateGroupSerializer
 
@@ -435,7 +541,8 @@ class UpdateGroupView(GenericAPIView):
 
         updated_at = datetime.datetime.utcnow()
 
-        GroupModel.objects.filter(group_id=id).update(admin_id=admin_id, group_profile=group_profile,group_name=group_name,
+        GroupModel.objects.filter(group_id=id,deleted_record=False).update(admin_id=admin_id, 
+                        group_profile=group_profile,group_name=group_name,
                         group_type=group_type, is_channel=is_channel, type=type1,
                         members=members,read_by=read_by, recent_message=recent_message, updated_at=updated_at)
            
@@ -466,13 +573,17 @@ class UpdateGroupView(GenericAPIView):
 
 class CreateTeamView(GenericAPIView):
     permission_classes = [AllowAny]
+    authentication_classes = [MyOwnTokenAuthentication]
     queryset = TeamModel.objects.all()
     serializer_class = CreateTeamSerializer
 
 
     def get(self, request, *args, **kwargs):
         # query = UserModel.objects.filter(user_id='5da73767-1cff-4214-a441-eb7fc1dd8128')
-        query = TeamModel.objects.all()
+        query = TeamModel.objects.filter(deleted_record=False).order_by('-created_at')
+        # for i in query:
+        #     i.deleted_record=False
+        #     i.save()
         team_list = []
 
         for team in query:
@@ -486,6 +597,7 @@ class CreateTeamView(GenericAPIView):
             team_dic['created_at'] = team.created_at
             team_dic['updated_at'] = team.updated_at
             team_dic['deleted_at'] = team.deleted_at
+            team_dic['deleted_record'] = team.deleted_record
             team_list.append(team_dic)
         
         return Response(
@@ -529,6 +641,7 @@ class CreateTeamView(GenericAPIView):
 
 class UpdateTeamView(GenericAPIView):
     permission_classes = [AllowAny]
+    authentication_classes = [MyOwnTokenAuthentication]
     queryset = TeamModel.objects.all()
     serializer_class = CreateTeamSerializer
 
@@ -567,7 +680,8 @@ class UpdateTeamView(GenericAPIView):
         updated_at = datetime.datetime.now()
 
 
-        TeamModel.objects.filter(team_id=id).update(admin_id=admin_id, is_public=is_public,team_name=team_name,
+        TeamModel.objects.filter(team_id=id,deleted_record=False).update(admin_id=admin_id, 
+                        is_public=is_public,team_name=team_name,
                         profile=profile, members=members, updated_at=updated_at)
            
         return Response(data={"Status": status.HTTP_200_OK,
@@ -598,13 +712,17 @@ class UpdateTeamView(GenericAPIView):
 
 class CreateMessageView(GenericAPIView):
     permission_classes = [AllowAny]
+    authentication_classes = [MyOwnTokenAuthentication]
     queryset = MessageModel.objects.all()
     serializer_class = MessageSerializer
 
 
     def get(self, request, *args, **kwargs):
         # query = UserModel.objects.filter(user_id='5da73767-1cff-4214-a441-eb7fc1dd8128')
-        query = MessageModel.objects.all()
+        query = MessageModel.objects.filter(deleted_record=False).order_by('-created_at')
+        # for i in query:
+        #     i.deleted_record=False
+        #     i.save()
         message_list = []
         for msg in query:
             msg_dic = {}
@@ -626,6 +744,7 @@ class CreateMessageView(GenericAPIView):
             msg_dic['created_at'] = msg.created_at
             msg_dic['updated_at'] = msg.updated_at
             msg_dic['deleted_at'] = msg.deleted_at
+            msg_dic['deleted_record'] = msg.deleted_record
             message_list.append(msg_dic)
         
         return Response(
@@ -751,6 +870,7 @@ class CreateMessageView(GenericAPIView):
 
 class UpdateMessageView(GenericAPIView):
     permission_classes = [AllowAny]
+    authentication_classes = [MyOwnTokenAuthentication]
     queryset = MessageModel.objects.all()
     serializer_class = MessageSerializer
 
@@ -795,7 +915,8 @@ class UpdateMessageView(GenericAPIView):
         read_by = [{"read_at": "timestamp", "user_id": str(sender_id)},
                     {"read_at": "timestamp", "user_id": str(sender_id)}]
 
-        MessageModel.objects.filter(message_id=id).update(gif_url=gif_url, is_reply=is_reply, message=message,
+        MessageModel.objects.filter(message_id=id,deleted_record=False).update(gif_url=gif_url, 
+                        is_reply=is_reply, message=message,
                         sender_id=sender_id, sender_name=sender_name, is_deleted=is_deleted,
                         delete_type=delete_type, type=type1, file=file, image=image,
                         reply_data=reply_data, read_by=read_by)

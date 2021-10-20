@@ -1,7 +1,7 @@
 from rest_framework import status, exceptions
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authentication import get_authorization_header, BaseAuthentication
-from .models import UserModel
+from .models import *
 import jwt, json
 from django.conf import settings
 
@@ -11,7 +11,7 @@ class MyOwnTokenAuthentication(TokenAuthentication):
     model = UserModel
 
     def get_model(self):
-        return User
+        return UserModel
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
@@ -42,7 +42,7 @@ class MyOwnTokenAuthentication(TokenAuthentication):
             payload = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=['HS256'])
             user_id = payload['user_id']
             email = payload['email']
-            # print(id)
+            # print(user_id)
             # print(email)
             try:
                 try:
@@ -51,15 +51,16 @@ class MyOwnTokenAuthentication(TokenAuthentication):
                 except:
                     msg = {"Status": status.HTTP_404_NOT_FOUND, "detail": "User Not Found"}
                     raise exceptions.AuthenticationFailed(msg)
-                # try:
-                #     user_token = user.deviceToken
-                # except:
-                #     msg = {"Status": status.HTTP_404_NOT_FOUND, "detail": "Token Not Found"}
-                #     raise exceptions.AuthenticationFailed(msg)
+                try:
+                    encoded_token= token.decode("utf-8") 
+                    user_token = UserTokenModel.objects.get(user_id=user.user_id, token=encoded_token)
+                except:
+                    msg = {"Status": status.HTTP_404_NOT_FOUND, "detail": "Token Not Found"}
+                    raise exceptions.AuthenticationFailed(msg)
 
-                # if not str(token) == str(user_token.token):
-                #     msg = {"Status": status.HTTP_401_UNAUTHORIZED, "detail": "Token Missmatch"}
-                #     raise exceptions.AuthenticationFailed(msg)
+                if not str(encoded_token) == str(user_token.token):
+                    msg = {"Status": status.HTTP_401_UNAUTHORIZED, "detail": "Token Missmatch"}
+                    raise exceptions.AuthenticationFailed(msg)
 
             except UserModel.DoesNotExist:
                 msg = {"Status" :status.HTTP_404_NOT_FOUND, "detail": "User Not Found"}

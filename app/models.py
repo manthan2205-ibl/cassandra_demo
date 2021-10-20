@@ -6,6 +6,7 @@ import datetime
 import uuid
 from cassandra.cqlengine import columns
 from django_cassandra_engine.models import DjangoCassandraModel
+from django.contrib.auth.models import AbstractBaseUser
 
 class ExampleModel(DjangoCassandraModel):
     example_id   = columns.UUID(primary_key=True, default=uuid.uuid4)
@@ -14,7 +15,21 @@ class ExampleModel(DjangoCassandraModel):
     description  = columns.Text(required=False)
 
 
-class UserModel(DjangoCassandraModel):
+class UserTokenModel(DjangoCassandraModel):
+    user_token_id = columns.UUID(primary_key=True, default=uuid.uuid4)
+    user_id = columns.UUID(required=False) #UserModel
+    token = columns.Text(required=False)
+
+    created_at = columns.DateTime(default=datetime.datetime.utcnow())
+    created_by = columns.UUID(required=False) #UserModel
+    updated_at = columns.DateTime(default=datetime.datetime.utcnow())
+    updated_by = columns.UUID(required=False) #UserModel
+    deleted_at = columns.DateTime(required=False)
+    deleted_by = columns.UUID(required=False) #UserModel
+    deleted_record = columns.Boolean(default=False)
+   
+
+class UserModel(DjangoCassandraModel, AbstractBaseUser):
     user_id = columns.UUID(primary_key=True, default=uuid.uuid4)
     name = columns.Text(required=False)
     email = columns.Text(required=False)
@@ -34,6 +49,7 @@ class UserModel(DjangoCassandraModel):
     updated_by = columns.UUID(required=False) #UserModel
     deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
+    deleted_record = columns.Boolean(default=False)
     
 
 class GroupModel(DjangoCassandraModel):
@@ -58,6 +74,7 @@ class GroupModel(DjangoCassandraModel):
     updated_by = columns.UUID(required=False) #UserModel
     deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
+    deleted_record = columns.Boolean(default=False)
     
 
 class MessageModel(DjangoCassandraModel):
@@ -87,6 +104,7 @@ class MessageModel(DjangoCassandraModel):
     updated_by = columns.UUID(required=False) #UserModel
     deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
+    deleted_record = columns.Boolean(default=False)
     
 
 class BadgeModel(DjangoCassandraModel):
@@ -101,6 +119,7 @@ class BadgeModel(DjangoCassandraModel):
     updated_by = columns.UUID(required=False) #UserModel
     deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
+    deleted_record = columns.Boolean(default=False)
     
 
 class TeamModel(DjangoCassandraModel):
@@ -118,6 +137,7 @@ class TeamModel(DjangoCassandraModel):
     updated_by = columns.UUID(required=False) #UserModel
     deleted_at = columns.DateTime(required=False)
     deleted_by = columns.UUID(required=False) #UserModel
+    deleted_record = columns.Boolean(default=False)
 
 
 

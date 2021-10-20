@@ -15,13 +15,24 @@ class ExampleModelerializer(DjangoCassandraModelSerializer):
 
 
 # Login
+class UserLogoutSerializer(Serializer):
+
+    token_type = serializers.CharField(required=True)
+    device_token = serializers.CharField(required=True)
+
+    class Meta:
+        fields = ['token_type','device_token']
+
+
+# logout
 class UserLoginSerializer(Serializer):
 
     email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True)
+    token_type = serializers.CharField(required=True)
+    device_token = serializers.CharField(required=True)
 
     class Meta:
-        fields = ['email', 'password']
+        fields = ['email', 'token_type','device_token']
 
 
 # Register
@@ -33,14 +44,16 @@ class UserRegisterSerializer(Serializer):
     profile_url = serializers.CharField(required=True)
     status = serializers.CharField(required=True)
     position = serializers.CharField(required=True)
-    profile = serializers.FileField(required=True)
-    is_online = serializers.BooleanField(required=True)
+    # profile = serializers.FileField(required=True)
+    # is_online = serializers.BooleanField(required=True)
+
 
     class Meta:
-        fields = ['name', 'email', 'profile_url',  'profile',
-                  'status', 'position', 'is_online']
+        fields = ['name', 'email', 'profile_url',
+                  'status', 'position']
 
 
+# group 
 class CreateGroupSerializer(Serializer):
 
     admin_id = serializers.CharField(required=True)
@@ -55,6 +68,7 @@ class CreateGroupSerializer(Serializer):
                   'is_channel', 'type']
 
 
+# team 
 class CreateTeamSerializer(Serializer):
 
     admin_id = serializers.CharField(required=True)
@@ -66,7 +80,7 @@ class CreateTeamSerializer(Serializer):
         fields = ['admin_id', 'is_public', 'team_name',  'profile']
                  
 
-
+# message 
 class MessageSerializer(Serializer):
 
     group_id = serializers.CharField(required=False)
