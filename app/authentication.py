@@ -46,28 +46,29 @@ class MyOwnTokenAuthentication(TokenAuthentication):
             # print(email)
             try:
                 try:
-                    user = UserModel.objects.get(user_id=user_id, email=email)
+                    user = UserModel.objects.get(user_id=user_id, email=email, deleted_record=False)
                     # print(user)
                 except:
-                    msg = {"status": status.HTTP_404_NOT_FOUND, "message": "User Not Found", "results":[]}
+                    msg = {"status": status.HTTP_404_NOT_FOUND, "message": "User Not Found", "results":{}}
                     raise exceptions.AuthenticationFailed(msg)
                 try:
                     encoded_token= token.decode("utf-8") 
-                    user_token = UserTokenModel.objects.get(user_id=user.user_id, token=encoded_token)
+                    user_token = UserTokenModel.objects.get(user_id=user.user_id, 
+                                            token=encoded_token, deleted_record=False)
                 except:
-                    msg = {"status": status.HTTP_404_NOT_FOUND, "message": "Token Not Found", "results":[]}
+                    msg = {"status": status.HTTP_404_NOT_FOUND, "message": "Token Not Found", "results":{}}
                     raise exceptions.AuthenticationFailed(msg)
 
                 if not str(encoded_token) == str(user_token.token):
-                    msg = {"status": status.HTTP_401_UNAUTHORIZED, "message": "Token Missmatch", "results":[]}
+                    msg = {"status": status.HTTP_401_UNAUTHORIZED, "message": "Token Missmatch", "results":{}}
                     raise exceptions.AuthenticationFailed(msg)
 
             except UserModel.DoesNotExist:
-                msg = {"status" :status.HTTP_404_NOT_FOUND, "message": "User Not Found", "results":[]}
+                msg = {"status" :status.HTTP_404_NOT_FOUND, "message": "User Not Found", "results":{}}
                 raise exceptions.AuthenticationFailed(msg)
 
         except (jwt.InvalidTokenError,jwt.DecodeError,jwt.ExpiredSignature):            
-            msg = {"status" :status.HTTP_401_UNAUTHORIZED, "message": "Token is invalid", "results":[]}
+            msg = {"status" :status.HTTP_401_UNAUTHORIZED, "message": "Token is invalid", "results":{}}
             raise exceptions.AuthenticationFailed(msg)
 
         return (user, token)

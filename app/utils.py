@@ -33,6 +33,7 @@ def custom_exception_handler(exc, context):
     # Call REST framework's default exception handler first,
     # to get the standard error response.
     response = exception_handler(exc, context)
+    print(response)
 
     # Now add the HTTP status code to the response.
     if response is not None:
@@ -40,7 +41,7 @@ def custom_exception_handler(exc, context):
         if response.data.get('detail'):
             response.data['message'] = response.data['detail'] 
             response.data.pop("detail")
-        response.data['results'] = []
+        response.data['results'] = {}
         
         print(response.data)
 

@@ -25,6 +25,7 @@ urlpatterns = [
 
     # api  User
     path('user_login', UserLoginView.as_view()),
+    path('otp_verify', OTPVerifyView.as_view()),
     path('user_logout', LogoutView.as_view()),
 
     path('user_register', UserRegisterView.as_view()),
@@ -33,10 +34,12 @@ urlpatterns = [
 
     # api  Group
     path('create_group', CreateGroupView.as_view()),
+    path('group_list', ListGroupView.as_view()),
     path('update_group/<str:id>/', UpdateGroupView.as_view()),
 
     # api  Team
     path('create_team', CreateTeamView.as_view()),
+    path('list_team', ListTeamView.as_view()),
     path('update_team/<str:id>/', UpdateTeamView.as_view()),
 
     # api  message

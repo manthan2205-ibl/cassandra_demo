@@ -42,6 +42,8 @@ class UserModel(DjangoCassandraModel, AbstractBaseUser):
     deviceToken = columns.Map(key_type=columns.Text, value_type=columns.List(value_type=columns.Text, 
                                             default=list,required=False), default=dict,required=False)
     blocked_by = columns.UUID(required=False) #UserModel
+    otp = columns.Integer(required=False)
+    otp_created_at = columns.DateTime(required=False)
 
     created_at = columns.DateTime(default=datetime.datetime.utcnow())
     created_by = columns.UUID(required=False) #UserModel

@@ -47,6 +47,8 @@ from django.conf import settings
 from . authentication import MyOwnTokenAuthentication
 from . pagination import *
 from . utils import *
+import math, random
+from django.core.mail import send_mail
 
 class TestView(GenericAPIView):
 
@@ -116,36 +118,82 @@ class UserLoginView(GenericAPIView):
         if not serializer.is_valid():
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                                   "message": serializer.errors,
-                                  "results":[]},
+                                  "results":{}},
                             status= status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data['email']
         
-        # UserModel_obj = UserModel.objects.exclude(deleted_by='isnull')
-        # print('UserModel_obj', UserModel_obj)
+        if not UserModel.objects.filter(email=email,deleted_record=False).exists():
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                             "message": "The email address is not register, Please register first",
+                             "results":{}},
+                            status=status.HTTP_400_BAD_REQUEST)
 
+        if UserModel.objects.filter(email=email,deleted_record=False).exists():
+            user = UserModel.objects.filter(email=email,deleted_record=False).first()
+
+            # deleted_by = user.deleted_by
+            # if deleted_by == None:
+            #     print('deleted_by', deleted_by)
+
+            digits = "0123456789"
+            OTP = ""
+            for i in range(6) :
+                OTP += digits[math.floor(random.random() * 10)]
+
+            print('OTP', OTP)
+
+            user.otp = int(OTP)
+            user.otp_created_at = datetime.datetime.utcnow()
+            user.save()
+
+            try:
+                message = "Your OTP  for verify email \n" \
+                            "UTP :-  {0}".format(OTP)
+                send_mail('OTP verification', message, settings.EMAIL_HOST_USER, [email], fail_silently=False)
+            except:
+                return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
+                                 "Message": "Email send is failed, Please enter valid email.",
+                                 "results":{}},
+                                status=status.HTTP_400_BAD_REQUEST)
+ 
+
+            return Response(data={"status": status.HTTP_200_OK,
+                                  "message": "OTP has been sent to your mail, Please check email.",
+                             "results": {}},
+                            status= status.HTTP_200_OK)
+        else:
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                 "message": "The email address is not register, Please register first",
+                 "results":{}},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class OTPVerifyView(GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = OTPSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":{}},
+                            status= status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data['email']
+        
+        
         if not UserModel.objects.filter(email=email,deleted_record=False).exists():
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                              "message": "The email address you entered is invalid, Please recheck.",
-                             "results":[]},
+                             "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
 
         if UserModel.objects.filter(email=email).exists():
-            # hash
-            # user = User.objects.get(email=email)
-            # new_password = check_password(password, user.password)
-            # print(new_password)
-            # if new_password == False:
-            #     return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-            #                                  "Message": "The password does not match, Please recheck."},
-            #                                 status=status.HTTP_400_BAD_REQUEST)
-            # hash
-          
             user = UserModel.objects.filter(email=email).first()
-
-            deleted_by = user.deleted_by
-            if deleted_by == None:
-                print('deleted_by', deleted_by)
 
             token_type = serializer.validated_data['token_type']
             device_token = serializer.validated_data['device_token']
@@ -167,20 +215,50 @@ class UserLoginView(GenericAPIView):
             encoded_token= encoded_token.decode("utf-8") 
             print('encoded_token', str(encoded_token))
 
+            otp = serializer.validated_data['otp']
+            database_OTP = user.otp 
+            otp_time = user.otp_created_at
+            current_time = datetime.datetime.utcnow()
+
+            diffrence_time = current_time - otp_time
+            print('diffrence_time', diffrence_time)
+            seconds = diffrence_time.seconds
+            print('seconds', seconds)
+            
+
+            if not otp == database_OTP:
+                return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                        "message": "OTP is wrong, Please enter valid OTP.",
+                                        "results":{}},
+                            status=status.HTTP_400_BAD_REQUEST)
+            
+            if seconds > 120:
+                return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                        "message": "OTP is expire, Please send again.",
+                                        "results":{}},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+
             UserTokenModel.objects.create(user_id=user.user_id, token=encoded_token)
             serializer = UserRegisterSerializer(user)
             return Response(data={"status": status.HTTP_200_OK,
-                                  "message": "User successfully login, Token Generated.",
-                             "results": {'id': str(user.user_id),
-                                         'token': encoded_token,
+                                "message": "User successfully login, Token Generated.",
+                            "results": {'data': {'id': str(user.user_id),
+                                        'token': encoded_token,
                                         #  'device_token': device_token,
-                                         'user_data':serializer.data}},
+                                        'user_data':serializer.data}}  },
                             status= status.HTTP_200_OK)
         else:
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
-                 "message": "The email address or password you entered is invalid. Please try again.",
+                 "message": "The email address you entered is invalid. Please try again.",
                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
+
+        
+
+            
+
+
 
 
 class LogoutView(GenericAPIView):
@@ -212,9 +290,11 @@ class LogoutView(GenericAPIView):
             user.save()
             try:
                 token= token.decode("utf-8") 
-                user_token = UserTokenModel.objects.get(user_id=request.user.user_id, token=token)
+                user_token = UserTokenModel.objects.get(user_id=request.user.user_id, 
+                                        token=token, deleted_record=False)
                 print('user_token', user_token)
-                user_token.delete()
+                user_token.deleted_record = True
+                user_token.save()
             except:
                 return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                                       "Message": 'Already Logged Out.',
@@ -334,7 +414,7 @@ class UserRegisterView(GenericAPIView):
            
         return Response(data={"status": status.HTTP_201_CREATED,
                                 "message": "User Registered",
-                                "results": serializer.data},
+                                "results": [serializer.data]},
                         status=status.HTTP_201_CREATED)
       
 
@@ -438,6 +518,18 @@ class UserUpdateView(GenericAPIView):
                         status=status.HTTP_200_OK)
 
 
+
+
+
+class ListGroupView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ListGroupSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        # user = self.request.user
+        query = GroupModel.objects.filter(deleted_record=False).order_by('-created_at')
+        return query
 
 
 class CreateGroupView(GenericAPIView):
@@ -599,6 +691,19 @@ class UpdateGroupView(GenericAPIView):
                         status=status.HTTP_200_OK)
 
 
+
+class ListTeamView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ListTeamSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        # user = self.request.user
+        query = TeamModel.objects.filter(deleted_record=False).order_by('-created_at')
+        return query
+
+
+
 class CreateTeamView(GenericAPIView):
     permission_classes = [AllowAny]
     authentication_classes = [MyOwnTokenAuthentication]
@@ -740,6 +845,18 @@ class UpdateTeamView(GenericAPIView):
                                 "message": "team deleted",
                                 "results":[]},
                         status=status.HTTP_200_OK)
+
+
+
+class ListTeamView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ListTeamSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        # user = self.request.user
+        query = TeamModel.objects.filter(deleted_record=False).order_by('-created_at')
+        return query
 
 
 
