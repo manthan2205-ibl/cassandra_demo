@@ -35,6 +35,24 @@ class UserLoginSerializer(Serializer):
         fields = ['email', 'token_type','device_token']
 
 
+
+class UserListSerializer(Serializer):
+
+    name = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    profile_url = serializers.CharField(required=True)
+    profile_url = serializers.CharField(required=True)
+    status = serializers.CharField(required=True)
+    position = serializers.CharField(required=True)
+    is_online = serializers.BooleanField(required=True)
+    deleted_record = serializers.BooleanField(required=True)
+    deviceToken = serializers.JSONField(required=True)
+
+    class Meta:
+        fields = ['name', 'email', 'profile_url',
+                  'status', 'position','is_online','deleted_record','deviceToken']
+
+
 # Register
 class UserRegisterSerializer(Serializer):
 

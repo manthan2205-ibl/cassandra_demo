@@ -114,8 +114,9 @@ class UserLoginView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status= status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data['email']
@@ -124,8 +125,9 @@ class UserLoginView(GenericAPIView):
         # print('UserModel_obj', UserModel_obj)
 
         if not UserModel.objects.filter(email=email,deleted_record=False).exists():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                             "Message": "The email address you entered is invalid, Please recheck."},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                             "message": "The email address you entered is invalid, Please recheck.",
+                             "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
         if UserModel.objects.filter(email=email).exists():
@@ -167,16 +169,17 @@ class UserLoginView(GenericAPIView):
 
             UserTokenModel.objects.create(user_id=user.user_id, token=encoded_token)
             serializer = UserRegisterSerializer(user)
-            return Response(data={"Status": status.HTTP_200_OK,
-                                  "Message": "User successfully login, Token Generated.",
-                             "Results": {'id': str(user.user_id),
+            return Response(data={"status": status.HTTP_200_OK,
+                                  "message": "User successfully login, Token Generated.",
+                             "results": {'id': str(user.user_id),
                                          'token': encoded_token,
                                         #  'device_token': device_token,
                                          'user_data':serializer.data}},
                             status= status.HTTP_200_OK)
         else:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                 "Message": "The email address or password you entered is invalid. Please try again."},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                 "message": "The email address or password you entered is invalid. Please try again.",
+                 "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -192,8 +195,9 @@ class LogoutView(GenericAPIView):
             serializer = self.get_serializer(data=request.data)
 
             if not serializer.is_valid():
-                return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                    "Message": serializer.errors},
+                return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                    "message": serializer.errors,
+                                    "results":[]},
                                 status= status.HTTP_400_BAD_REQUEST)
 
             token_type = serializer.validated_data['token_type']
@@ -202,6 +206,7 @@ class LogoutView(GenericAPIView):
             deviceToken = user.deviceToken    
             token_type_list = deviceToken[str(token_type)] 
             token_type_list.remove(str(device_token))
+            # token_type_list.clear() 
             deviceToken[str(token_type)] = token_type_list
             user.deviceToken = deviceToken   
             user.save()
@@ -211,22 +216,34 @@ class LogoutView(GenericAPIView):
                 print('user_token', user_token)
                 user_token.delete()
             except:
-                return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                      "Message": 'Already Logged Out.'},
+                return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                      "Message": 'Already Logged Out.',
+                                      "results":[]},
                                 status=status.HTTP_400_BAD_REQUEST)
             
             
 
             return Response(data={"Status": status.HTTP_200_OK,
-                                  "Message": "User Logged Out."},
+                                  "Message": "User Logged Out.",
+                                  "results":[]},
                             status=status.HTTP_200_OK)
         except:
             return Response(data={"Status":status.HTTP_400_BAD_REQUEST,
-                                  "Message":'Already Logged Out.'},
+                                  "Message":'Already Logged Out.',
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
 
 
+class ListUserView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserListSerializer
+    pagination_class = StandardResultsSetPagination
+    # queryset = LogIncident.objects.filter()
+    def get_queryset(self):
+        # user = self.request.user
+        query = UserModel.objects.filter(deleted_record=False).order_by('-created_at')
+        return query
 
 
 class UserRegisterView(GenericAPIView):
@@ -256,9 +273,9 @@ class UserRegisterView(GenericAPIView):
         
         return Response(
             data={
-                "Status":status.HTTP_200_OK,
-                "Message":"User list",
-                "Results": user_list},
+                "status":status.HTTP_200_OK,
+                "message":"User list",
+                "results": user_list},
             status=status.HTTP_200_OK
         )
 
@@ -267,13 +284,15 @@ class UserRegisterView(GenericAPIView):
         serializer = UserRegisterSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
         
         if UserModel.objects.filter(email=serializer.validated_data['email'],deleted_record=False).exists():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": "User Email Already Registered",},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": "User Email Already Registered",
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -313,9 +332,9 @@ class UserRegisterView(GenericAPIView):
 
 
            
-        return Response(data={"Status": status.HTTP_201_CREATED,
-                                "Message": "User Registered",
-                                "Results": serializer.data},
+        return Response(data={"status": status.HTTP_201_CREATED,
+                                "message": "User Registered",
+                                "results": serializer.data},
                         status=status.HTTP_201_CREATED)
       
 
@@ -334,8 +353,9 @@ class UserUpdateView(GenericAPIView):
         try:
             UserModel_obj = UserModel.objects.get(user_id=id)
         except:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                "Message": "User already deleted or id not found"},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "User already deleted or id not found",
+                                "results":[]},
                         status=status.HTTP_400_BAD_REQUEST)
 
         print('UserModel_obj', UserModel_obj)
@@ -343,8 +363,9 @@ class UserUpdateView(GenericAPIView):
         serializer = UserRegisterSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # try:
@@ -389,9 +410,9 @@ class UserUpdateView(GenericAPIView):
         # UserModel_obj.save() 
 
         # print('deviceToken', deviceToken)
-        return Response(data={"Status": status.HTTP_200_OK,
-                                "Message": "User update",
-                                "Results": serializer.data},
+        return Response(data={"status": status.HTTP_200_OK,
+                                "message": "User update",
+                                "results": serializer.data},
                         status=status.HTTP_200_OK)
       
 
@@ -403,15 +424,17 @@ class UserUpdateView(GenericAPIView):
         try:
             UserModel_obj = UserModel.objects.get(user_id=id)
         except:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                "Message": "User already deleted or id not found"},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "User already deleted or id not found",
+                                "results":[]},
                         status=status.HTTP_400_BAD_REQUEST)
 
         print('UserModel_obj', UserModel_obj)
         UserModel_obj.delete()
         
-        return Response(data={"Status": status.HTTP_200_OK,
-                                "Message": "User deleted"},
+        return Response(data={"status": status.HTTP_200_OK,
+                                "message": "User deleted",
+                                "results":[]},
                         status=status.HTTP_200_OK)
 
 
@@ -453,9 +476,9 @@ class CreateGroupView(GenericAPIView):
         
         return Response(
             data={
-                "Status":status.HTTP_200_OK,
-                "Message":f"group list",
-                "Results": group_list},
+                "status":status.HTTP_200_OK,
+                "message":f"group list",
+                "results": group_list},
             status=status.HTTP_200_OK
         )
 
@@ -464,8 +487,9 @@ class CreateGroupView(GenericAPIView):
         serializer = CreateGroupSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # try:
@@ -489,9 +513,9 @@ class CreateGroupView(GenericAPIView):
                         group_type=group_type, is_channel=is_channel, type=type1,
                         members=members,read_by=read_by, recent_message=recent_message)
            
-        return Response(data={"Status": status.HTTP_201_CREATED,
-                                "Message": "Group created",
-                                "Results": serializer.data},
+        return Response(data={"status": status.HTTP_201_CREATED,
+                                "message": "Group created",
+                                "results": serializer.data},
                         status=status.HTTP_201_CREATED)
       
 
@@ -509,8 +533,9 @@ class UpdateGroupView(GenericAPIView):
         try:
             GroupModel_obj = GroupModel.objects.get(group_id=id)
         except:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                "Message": "group already deleted or id not found"},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "group already deleted or id not found",
+                                "results":[]},
                         status=status.HTTP_400_BAD_REQUEST)
         print('GroupModel_obj', GroupModel_obj)
         
@@ -518,8 +543,9 @@ class UpdateGroupView(GenericAPIView):
         serializer = CreateGroupSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # try:
@@ -546,9 +572,9 @@ class UpdateGroupView(GenericAPIView):
                         group_type=group_type, is_channel=is_channel, type=type1,
                         members=members,read_by=read_by, recent_message=recent_message, updated_at=updated_at)
            
-        return Response(data={"Status": status.HTTP_200_OK,
-                                "Message": "Group updated",
-                                "Results": serializer.data},
+        return Response(data={"status": status.HTTP_200_OK,
+                                "message": "Group updated",
+                                "results": serializer.data},
                         status=status.HTTP_200_OK)
       
     
@@ -559,15 +585,17 @@ class UpdateGroupView(GenericAPIView):
         try:
             GroupModel_obj = GroupModel.objects.get(group_id=id)
         except:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                "Message": "group already deleted or id not found"},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "group already deleted or id not found",
+                                "results":[]},
                         status=status.HTTP_400_BAD_REQUEST)
 
         print('GroupModel_obj', GroupModel_obj)
         GroupModel_obj.delete()
         
-        return Response(data={"Status": status.HTTP_200_OK,
-                                "Message": "Group deleted"},
+        return Response(data={"status": status.HTTP_200_OK,
+                                "message": "Group deleted",
+                                "results":[]},
                         status=status.HTTP_200_OK)
 
 
@@ -602,9 +630,9 @@ class CreateTeamView(GenericAPIView):
         
         return Response(
             data={
-                "Status":status.HTTP_200_OK,
-                "Message":f"team list",
-                "Results": team_list},
+                "status":status.HTTP_200_OK,
+                "message":f"team list",
+                "results": team_list},
             status=status.HTTP_200_OK
         )
 
@@ -613,8 +641,9 @@ class CreateTeamView(GenericAPIView):
         serializer = CreateTeamSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # try:
@@ -632,9 +661,9 @@ class CreateTeamView(GenericAPIView):
         TeamModel.objects.create(admin_id=admin_id, is_public=is_public,team_name=team_name,
                         profile=profile, members=members)
            
-        return Response(data={"Status": status.HTTP_201_CREATED,
-                                "Message": "Team created",
-                                "Results": serializer.data},
+        return Response(data={"status": status.HTTP_201_CREATED,
+                                "message": "Team created",
+                                "results": serializer.data},
                         status=status.HTTP_201_CREATED)
       
 
@@ -652,8 +681,9 @@ class UpdateTeamView(GenericAPIView):
         try:
             TeamModel_obj = TeamModel.objects.get(team_id=id)
         except:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                "Message": "team already deleted or id not found"},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "team already deleted or id not found",
+                                "results":[]},
                         status=status.HTTP_400_BAD_REQUEST)
 
         print('TeamModel_obj', TeamModel_obj)
@@ -662,8 +692,9 @@ class UpdateTeamView(GenericAPIView):
         serializer = CreateTeamSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # try:
@@ -684,9 +715,9 @@ class UpdateTeamView(GenericAPIView):
                         is_public=is_public,team_name=team_name,
                         profile=profile, members=members, updated_at=updated_at)
            
-        return Response(data={"Status": status.HTTP_200_OK,
-                                "Message": "Team updated",
-                                "Results": serializer.data},
+        return Response(data={"status": status.HTTP_200_OK,
+                                "message": "Team updated",
+                                "results": serializer.data},
                         status=status.HTTP_200_OK)
       
     
@@ -697,15 +728,17 @@ class UpdateTeamView(GenericAPIView):
         try:
             TeamModel_obj = TeamModel.objects.get(team_id=id)
         except:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                "Message": "team already deleted or id not found"},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "team already deleted or id not found",
+                                "results":[]},
                         status=status.HTTP_400_BAD_REQUEST)
 
         print('TeamModel_obj', TeamModel_obj)
         TeamModel_obj.delete()
         
-        return Response(data={"Status": status.HTTP_200_OK,
-                                "Message": "team deleted"},
+        return Response(data={"status": status.HTTP_200_OK,
+                                "message": "team deleted",
+                                "results":[]},
                         status=status.HTTP_200_OK)
 
 
@@ -749,9 +782,9 @@ class CreateMessageView(GenericAPIView):
         
         return Response(
             data={
-                "Status":status.HTTP_200_OK,
-                "Message":f"message list",
-                "Results": message_list},
+                "status":status.HTTP_200_OK,
+                "message":f"message list",
+                "results": message_list},
             status=status.HTTP_200_OK
         )
 
@@ -760,8 +793,9 @@ class CreateMessageView(GenericAPIView):
         serializer = MessageSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # try:
@@ -861,9 +895,9 @@ class CreateMessageView(GenericAPIView):
         # print('a', a)
 
            
-        return Response(data={"Status": status.HTTP_201_CREATED,
-                                "Message": "Message created",
-                                "Results": serializer.data},
+        return Response(data={"status": status.HTTP_201_CREATED,
+                                "message": "Message created",
+                                "results": serializer.data},
                         status=status.HTTP_201_CREATED)
       
 
@@ -881,8 +915,9 @@ class UpdateMessageView(GenericAPIView):
         try:
             MessageModel_obj = MessageModel.objects.get(message_id=id)
         except:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                "Message": "Message already deleted or id not found"},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "Message already deleted or id not found",
+                                "results":[]},
                         status=status.HTTP_400_BAD_REQUEST)
 
         print('MessageModel_obj', MessageModel_obj)
@@ -891,8 +926,9 @@ class UpdateMessageView(GenericAPIView):
         serializer = MessageSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                  "Message": serializer.errors},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                  "message": serializer.errors,
+                                  "results":[]},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # try:
@@ -921,9 +957,9 @@ class UpdateMessageView(GenericAPIView):
                         delete_type=delete_type, type=type1, file=file, image=image,
                         reply_data=reply_data, read_by=read_by)
            
-        return Response(data={"Status": status.HTTP_200_OK,
-                                "Message": "Message updated",
-                                "Results": serializer.data},
+        return Response(data={"status": status.HTTP_200_OK,
+                                "message": "Message updated",
+                                "results": serializer.data},
                         status=status.HTTP_200_OK)
       
     
@@ -934,15 +970,17 @@ class UpdateMessageView(GenericAPIView):
         try:
             MessageModel_obj = MessageModel.objects.get(message_id=id)
         except:
-            return Response(data={"Status": status.HTTP_400_BAD_REQUEST,
-                                "Message": "Message already deleted or id not found"},
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "Message already deleted or id not found",
+                                "results":[]},
                         status=status.HTTP_400_BAD_REQUEST)
 
         print('MessageModel_obj', MessageModel_obj)
         MessageModel_obj.delete()
         
-        return Response(data={"Status": status.HTTP_200_OK,
-                                "Message": "Message deleted"},
+        return Response(data={"status": status.HTTP_200_OK,
+                                "message": "Message deleted",
+                                "results":[]},
                         status=status.HTTP_200_OK)
 
 

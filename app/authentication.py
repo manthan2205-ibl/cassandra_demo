@@ -49,25 +49,25 @@ class MyOwnTokenAuthentication(TokenAuthentication):
                     user = UserModel.objects.get(user_id=user_id, email=email)
                     # print(user)
                 except:
-                    msg = {"Status": status.HTTP_404_NOT_FOUND, "detail": "User Not Found"}
+                    msg = {"status": status.HTTP_404_NOT_FOUND, "message": "User Not Found", "results":[]}
                     raise exceptions.AuthenticationFailed(msg)
                 try:
                     encoded_token= token.decode("utf-8") 
                     user_token = UserTokenModel.objects.get(user_id=user.user_id, token=encoded_token)
                 except:
-                    msg = {"Status": status.HTTP_404_NOT_FOUND, "detail": "Token Not Found"}
+                    msg = {"status": status.HTTP_404_NOT_FOUND, "message": "Token Not Found", "results":[]}
                     raise exceptions.AuthenticationFailed(msg)
 
                 if not str(encoded_token) == str(user_token.token):
-                    msg = {"Status": status.HTTP_401_UNAUTHORIZED, "detail": "Token Missmatch"}
+                    msg = {"status": status.HTTP_401_UNAUTHORIZED, "message": "Token Missmatch", "results":[]}
                     raise exceptions.AuthenticationFailed(msg)
 
             except UserModel.DoesNotExist:
-                msg = {"Status" :status.HTTP_404_NOT_FOUND, "detail": "User Not Found"}
+                msg = {"status" :status.HTTP_404_NOT_FOUND, "message": "User Not Found", "results":[]}
                 raise exceptions.AuthenticationFailed(msg)
 
         except (jwt.InvalidTokenError,jwt.DecodeError,jwt.ExpiredSignature):            
-            msg = {"Status" :status.HTTP_401_UNAUTHORIZED, "detail": "Token is invalid"}
+            msg = {"status" :status.HTTP_401_UNAUTHORIZED, "message": "Token is invalid", "results":[]}
             raise exceptions.AuthenticationFailed(msg)
 
         return (user, token)

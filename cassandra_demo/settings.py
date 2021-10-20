@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-c6b93o&ux3dueq3&=wtv8fkp7(g@l%^fl6a(409)$rybb-2d7w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -97,7 +97,8 @@ REST_FRAMEWORK = {
     ],
 
     'DEFAULT_PAGINATION_CLASS': 'app.pagination.StandardResultsSetPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'EXCEPTION_HANDLER': 'app.utils.custom_exception_handler'
 }
 
 
