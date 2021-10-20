@@ -49,7 +49,6 @@ def custom_exception_handler(exc, context):
 
 
 
-    
 
 # from rest_framework import pagination
 # from rest_framework.response import Response

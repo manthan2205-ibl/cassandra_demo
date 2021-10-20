@@ -49,6 +49,7 @@ from . pagination import *
 from . utils import *
 import math, random
 from django.core.mail import send_mail
+from rest_framework.exceptions import APIException
 
 class TestView(GenericAPIView):
 
@@ -107,6 +108,7 @@ class TestView(GenericAPIView):
             status=status.HTTP_400_BAD_REQUEST
         )
  
+
  
 class UserLoginView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -259,7 +261,7 @@ class LogoutView(GenericAPIView):
     authentication_classes = [MyOwnTokenAuthentication]
     serializer_class = UserLogoutSerializer
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             token = Authenticate(self, request)
             # print('token', token)
@@ -269,7 +271,7 @@ class LogoutView(GenericAPIView):
             if not serializer.is_valid():
                 return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                                     "message": serializer.errors,
-                                    "results":[]},
+                                    "results":{}},
                                 status= status.HTTP_400_BAD_REQUEST)
 
             token_type = serializer.validated_data['token_type']
@@ -288,23 +290,25 @@ class LogoutView(GenericAPIView):
                                         token=token, deleted_record=False)
                 print('user_token', user_token)
                 user_token.deleted_record = True
+                user_token.deleted_at = datetime.datetime.utcnow()
+                user_token.deleted_by = request.user.user_id
                 user_token.save()
             except:
                 return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                                       "Message": 'Already Logged Out.',
-                                      "results":[]},
+                                      "results":{}},
                                 status=status.HTTP_400_BAD_REQUEST)
             
             
 
-            return Response(data={"Status": status.HTTP_200_OK,
-                                  "Message": "User Logged Out.",
-                                  "results":[]},
+            return Response(data={"status": status.HTTP_200_OK,
+                                  "message": "User Logged Out.",
+                                  "results":{}},
                             status=status.HTTP_200_OK)
         except:
             return Response(data={"Status":status.HTTP_400_BAD_REQUEST,
                                   "Message":'Already Logged Out.',
-                                  "results":[]},
+                                  "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -360,13 +364,13 @@ class UserRegisterView(GenericAPIView):
         if not serializer.is_valid():
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                                   "message": serializer.errors,
-                                  "results":[]},
+                                  "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
         
         if UserModel.objects.filter(email=serializer.validated_data['email'],deleted_record=False).exists():
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                                   "message": "User Email Already Registered",
-                                  "results":[]},
+                                  "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -535,38 +539,41 @@ class CreateGroupView(GenericAPIView):
 
 
     def get(self, request, *args, **kwargs):
-        # query = GroupModel.objects.filter(is_channel=True).order_by('-created_at')
-        query = GroupModel.objects.filter(deleted_record=False).order_by('-created_at')
-        # for i in query:
-        #     i.deleted_record=False
-        #     i.save()
-        group_list = []
+        try:
+            # query = GroupModel.objects.filter(is_channel=True).order_by('-created_at')
+            query = GroupModel.objects.filter(deleted_record=False).order_by('-created_at')
+            # for i in query:
+            #     i.deleted_record=False
+            #     i.save()
+            group_list = []
 
-        # user = request.user
-        # print('user', user.user_id)
+            # user = request.user
+            # print('user', user.user_id)
 
-        for grp in query:
-            grp_dic = {}
-            grp_dic['group_id'] = grp.group_id
-            grp_dic['admin_id'] = grp.admin_id
-            grp_dic['group_profile'] = grp.group_profile
-            grp_dic['group_name'] = grp.group_name
-            grp_dic['group_type'] = grp.group_type
-            grp_dic['is_channel'] = grp.is_channel
-            grp_dic['type'] = grp.type
-            grp_dic['members'] = grp.members
-            grp_dic['read_by'] = grp.read_by
-            grp_dic['recent_message'] = grp.recent_message
-            grp_dic['deleted_record'] = grp.deleted_record
-            group_list.append(grp_dic)
-        
-        return Response(
-            data={
-                "status":status.HTTP_200_OK,
-                "message":f"group list",
-                "results": group_list},
-            status=status.HTTP_200_OK
-        )
+            for grp in query:
+                grp_dic = {}
+                grp_dic['group_id'] = grp.group_id
+                grp_dic['admin_id'] = grp.admin_id
+                grp_dic['group_profile'] = grp.group_profile
+                grp_dic['group_name'] = grp.group_name
+                grp_dic['group_type'] = grp.group_type
+                grp_dic['is_channel'] = grp.is_channel
+                grp_dic['type'] = grp.type
+                grp_dic['members'] = grp.members
+                grp_dic['read_by'] = grp.read_by
+                grp_dic['recent_message'] = grp.recent_message
+                grp_dic['deleted_record'] = grp.deleted_record
+                group_list.append(grp_dic)
+            
+            return Response(
+                data={
+                    "status":status.HTTP_200_OK,
+                    "message":f"group list",
+                    "results": group_list},
+                status=status.HTTP_200_OK
+            )
+        except:
+            raise APIException('internal error')
 
     def post(self, request, *args, **kwargs):
         
@@ -850,6 +857,18 @@ class ListTeamView(ListAPIView):
     def get_queryset(self):
         # user = self.request.user
         query = TeamModel.objects.filter(deleted_record=False).order_by('-created_at')
+        return query
+
+
+
+class ListMessageView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ListMessageSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        # user = self.request.user
+        query = MessageModel.objects.filter(deleted_record=False).order_by('-created_at')
         return query
 
 

@@ -18,6 +18,8 @@ from . views import*
 # except:
 #     pass
 
+
+    
 urlpatterns = [
     path('', homepage, name='home'),
     path('test', TestView.as_view(), name='test'),
@@ -44,5 +46,6 @@ urlpatterns = [
 
     # api  message
     path('create_message', CreateMessageView.as_view()),
+    path('list_message', ListMessageView.as_view()),
     path('update_message/<str:id>/', UpdateMessageView.as_view()),
 ]

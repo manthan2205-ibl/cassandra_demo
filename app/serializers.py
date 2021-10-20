@@ -167,9 +167,9 @@ class MessageSerializer(Serializer):
 
 class ListMessageSerializer(Serializer):
 
+    message_id = serializers.CharField(required=False)
     group_id = serializers.CharField(required=False)
     team_id = serializers.CharField(required=False)
-
     gif_url = serializers.CharField(required=True)
     is_reply = serializers.BooleanField(required=True)
     message = serializers.CharField(required=True)
@@ -178,7 +178,8 @@ class ListMessageSerializer(Serializer):
     is_deleted = serializers.BooleanField(required=True)
     delete_type = serializers.CharField(required=True)
     type = serializers.CharField(required=True)
+    file = serializers.ListField(required=True)
 
     class Meta:
-        fields = ['group_id', 'team_id', 'gif_url', 'is_reply', 'message',  'sender_id',
+        fields = ['message_id', 'group_id', 'team_id', 'gif_url', 'is_reply', 'message',  'sender_id',
                   'sender_name', 'is_deleted', 'delete_type', 'type']
