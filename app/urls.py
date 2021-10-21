@@ -18,8 +18,6 @@ from . views import*
 # except:
 #     pass
 
-
-    
 urlpatterns = [
     path('', homepage, name='home'),
     path('test', TestView.as_view(), name='test'),

@@ -25,7 +25,7 @@ urlpatterns = [
 ]
 
 handler404 = 'rest_framework.exceptions.bad_request'
-# handler500 = 'rest_framework.exceptions.server_error'
+handler500 = 'rest_framework.exceptions.server_error'
 
 if settings.DEBUG:
 	urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -28,6 +28,7 @@ def Authenticate(self, request):
 
 
 from rest_framework.views import exception_handler
+from rest_framework.response import Response
 
 def custom_exception_handler(exc, context):
     # Call REST framework's default exception handler first,
@@ -44,6 +45,14 @@ def custom_exception_handler(exc, context):
         response.data['results'] = {}
         
         print(response.data)
+    # else:
+    #     return Response(
+    #         data={
+    #             "status":status.HTTP_200_OK,
+    #             "message":f"team list",
+    #             "results": "team_list"},
+    #         status=status.HTTP_200_OK
+    #     )
 
     return response
 
