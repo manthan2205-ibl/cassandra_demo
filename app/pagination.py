@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-
+from . utils import *
+import json
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 5
@@ -8,6 +9,8 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 10
 
     def get_paginated_response(self, data):
+        data = json.dumps(data)
+        print('data', data)
         return Response({
             "status": 200,
             "message": "Your list",
@@ -15,7 +18,7 @@ class StandardResultsSetPagination(PageNumberPagination):
                         'next': self.get_next_link(),
                         'previous': self.get_previous_link(),
                         'count': self.page.paginator.count,
-                        'results': data}}
+                        'results': data_encryptor(str(data)) }}
             })
 
 

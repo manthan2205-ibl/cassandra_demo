@@ -37,25 +37,25 @@ class OTPSerializer(Serializer):
 
 
 # login
-class UserLoginSerializer(Serializer):
+class NormalSerializer(Serializer):
 
-    email = serializers.CharField(required=True)
+    data = serializers.CharField(required=True)
     
     class Meta:
-        fields = ['email']
+        fields = ['data']
 
 
 
 class UserListSerializer(Serializer):
 
     name = serializers.CharField(required=True)
-    email = serializers.EmailField(required=True)
+    email = serializers.CharField(required=True)
     profile_url = serializers.CharField(required=True)
     profile_url = serializers.CharField(required=True)
     status = serializers.CharField(required=True)
     position = serializers.CharField(required=True)
-    is_online = serializers.BooleanField(required=True)
-    deleted_record = serializers.BooleanField(required=True)
+    is_online = serializers.CharField(required=True)
+    deleted_record = serializers.CharField(required=True)
     deviceToken = serializers.JSONField(required=True)
 
     class Meta:
@@ -69,7 +69,6 @@ class UserRegisterSerializer(Serializer):
     name = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     profile_url = serializers.CharField(required=True)
-    # profile_url = serializers.CharField(required=True)
     status = serializers.CharField(required=True)
     position = serializers.CharField(required=True)
     # profile = serializers.FileField(required=True)

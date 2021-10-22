@@ -51,7 +51,6 @@ import math, random
 from django.core.mail import send_mail
 from rest_framework.exceptions import APIException
 
-key = 'key'
 
 class TestView(GenericAPIView):
 
@@ -114,7 +113,7 @@ class TestView(GenericAPIView):
  
 class UserLoginView(GenericAPIView):
     permission_classes = [AllowAny]
-    serializer_class = UserLoginSerializer
+    serializer_class = NormalSerializer
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -125,17 +124,23 @@ class UserLoginView(GenericAPIView):
                                   "results":{}},
                             status= status.HTTP_400_BAD_REQUEST)
 
-        email = serializer.validated_data['email']
+        # email = serializer.validated_data['email']
+        data = serializer.validated_data['data']
         try:
-            email = data_decryptor(email)
-            print('email',email)
+            # email = data_decryptor(email)
+            # print('email',email)
+            data = data_decryptor(str(data))
+            print('data',data)
         except:
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                              "message": "Error in data decryption",
                              "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
 
-
+        data = json.loads(data)
+        print('data', data)
+        print(type(data))
+        email = data.get('email')
         
         if not UserModel.objects.filter(email=email,deleted_record=False).exists():
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
@@ -163,7 +168,7 @@ class UserLoginView(GenericAPIView):
 
             try:
                 message = "Your OTP  for verify email \n" \
-                            "UTP :-  {0}".format(OTP)
+                            "OTP :-  {0}".format(OTP)
                 send_mail('OTP verification', message, settings.EMAIL_HOST_USER, [email], fail_silently=False)
             except:
                 return Response(data={"status": status.HTTP_400_BAD_REQUEST,
@@ -186,7 +191,7 @@ class UserLoginView(GenericAPIView):
 
 class OTPVerifyView(GenericAPIView):
     permission_classes = [AllowAny]
-    serializer_class = OTPSerializer
+    serializer_class = NormalSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -197,20 +202,25 @@ class OTPVerifyView(GenericAPIView):
                                   "results":{}},
                             status= status.HTTP_400_BAD_REQUEST)
         
-        email = serializer.validated_data['email']
-        otp = serializer.validated_data['otp']
-        token_type = serializer.validated_data['token_type']
-        device_token = serializer.validated_data['device_token']
+        data = serializer.validated_data['data']
         try:
-            email = data_decryptor(email)
-            otp = data_decryptor(otp)
-            token_type = data_decryptor(token_type)
-            device_token = data_decryptor(device_token)
+            data = data_decryptor(data)
+            print('data',data)
         except:
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                              "message": "Error in data decryption",
                              "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
+
+        data = json.loads(data)
+        print('data', data)
+        print(type(data))
+        email = data.get('email')
+        token_type = data.get('token_type')
+        device_token = data.get('device_token')
+        otp = data.get('otp')
+
+        
 
         if not UserModel.objects.filter(email=email,deleted_record=False).exists():
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
@@ -285,7 +295,7 @@ class OTPVerifyView(GenericAPIView):
 
 class LogoutView(GenericAPIView):
     authentication_classes = [MyOwnTokenAuthentication]
-    serializer_class = UserLogoutSerializer
+    serializer_class = NormalSerializer
 
     def post(self, request, *args, **kwargs):
         try:
@@ -300,17 +310,22 @@ class LogoutView(GenericAPIView):
                                     "results":{}},
                                 status= status.HTTP_400_BAD_REQUEST)
 
-            token_type = serializer.validated_data['token_type']
-            device_token = serializer.validated_data['device_token']
-
+            data = serializer.validated_data['data']
             try:
-                token_type = data_decryptor(token_type)
-                device_token = data_decryptor(device_token)
+                data = data_decryptor(data)
+                print('data',data)
             except:
                 return Response(data={"status": status.HTTP_400_BAD_REQUEST,
-                                "message": "Error in data decryption",
-                                "results":{}},
+                                    "message": "Error in data decryption",
+                                    "results":{}},
                                 status=status.HTTP_400_BAD_REQUEST)
+
+            data = json.loads(data)
+            print('data', data)
+            print(type(data))
+            token_type = data.get('token_type')
+            device_token = data.get('device_token')
+
 
             deviceToken = user.deviceToken    
             token_type_list = deviceToken[str(token_type)] 
