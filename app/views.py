@@ -126,6 +126,16 @@ class UserLoginView(GenericAPIView):
                             status= status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data['email']
+        try:
+            email = data_decryptor(email)
+            print('email',email)
+        except:
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                             "message": "Error in data decryption",
+                             "results":{}},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+
         
         if not UserModel.objects.filter(email=email,deleted_record=False).exists():
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
@@ -186,10 +196,22 @@ class OTPVerifyView(GenericAPIView):
                                   "message": serializer.errors,
                                   "results":{}},
                             status= status.HTTP_400_BAD_REQUEST)
-
+        
         email = serializer.validated_data['email']
-        
-        
+        otp = serializer.validated_data['otp']
+        token_type = serializer.validated_data['token_type']
+        device_token = serializer.validated_data['device_token']
+        try:
+            email = data_decryptor(email)
+            otp = data_decryptor(otp)
+            token_type = data_decryptor(token_type)
+            device_token = data_decryptor(device_token)
+        except:
+            return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                             "message": "Error in data decryption",
+                             "results":{}},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         if not UserModel.objects.filter(email=email,deleted_record=False).exists():
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                              "message": "The email address you entered is invalid, Please recheck.",
@@ -199,7 +221,7 @@ class OTPVerifyView(GenericAPIView):
         if UserModel.objects.filter(email=email,deleted_record=False).exists():
             user = UserModel.objects.filter(email=email,deleted_record=False).first()
 
-            otp = serializer.validated_data['otp']
+            
             database_OTP = user.otp 
             otp_time = user.otp_created_at
             current_time = datetime.datetime.utcnow()
@@ -222,8 +244,7 @@ class OTPVerifyView(GenericAPIView):
             #                             "results":{}},
             #                 status=status.HTTP_400_BAD_REQUEST)
 
-            token_type = serializer.validated_data['token_type']
-            device_token = serializer.validated_data['device_token']
+            
             deviceToken = user.deviceToken    
             token_type_list = deviceToken[str(token_type)] 
             token_type_list.append(str(device_token))
@@ -281,6 +302,15 @@ class LogoutView(GenericAPIView):
 
             token_type = serializer.validated_data['token_type']
             device_token = serializer.validated_data['device_token']
+
+            try:
+                token_type = data_decryptor(token_type)
+                device_token = data_decryptor(device_token)
+            except:
+                return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+                                "message": "Error in data decryption",
+                                "results":{}},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             deviceToken = user.deviceToken    
             token_type_list = deviceToken[str(token_type)] 
@@ -353,7 +383,10 @@ class UserRegisterView(GenericAPIView):
             user_dic['position'] = user.position
             user_dic['deviceToken'] = user.deviceToken
             user_list.append(user_dic)
-        
+            
+        user_list =  json.dumps(user_list)
+        # print('user_list', user_list)
+
         return Response(
             data={
                 "status":status.HTTP_200_OK,

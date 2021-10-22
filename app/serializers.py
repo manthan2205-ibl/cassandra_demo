@@ -69,7 +69,7 @@ class UserRegisterSerializer(Serializer):
     name = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     profile_url = serializers.CharField(required=True)
-    profile_url = serializers.CharField(required=True)
+    # profile_url = serializers.CharField(required=True)
     status = serializers.CharField(required=True)
     position = serializers.CharField(required=True)
     # profile = serializers.FileField(required=True)

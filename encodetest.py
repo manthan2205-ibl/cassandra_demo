@@ -398,32 +398,33 @@ from base64 import b64decode, b64encode
 import json
 
 backend = default_backend()
-padder = padding.PKCS7(128).padder()
-unpadder = padding.PKCS7(128).unpadder()
-# data = b"user_list"
-ďata = json.dumps(data)
-print('ďata', ďata)
 
-data = str(ďata).encode('utf-8')
-data = padder.update(data) + padder.finalize()
+
+
 
 key = b64decode('heyFrj+egrMgWrt+hr//uhEFgbfEf/erFSEhbrphthw=')
 iv = b64decode('YmRocm9xc3JlcG16ZGVoZQ==')
 
 
 cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
+padder = padding.PKCS7(128).padder()
+# ďata = json.dumps(data)
+ďata = 197475
+data = str(ďata).encode('utf-8')
+data = padder.update(data) + padder.finalize()
 encryptor = cipher.encryptor()
-ct = encryptor.update(data) + encryptor.finalize()
-ct_out = b64encode(ct)
+c1 = encryptor.update(data) + encryptor.finalize()
+ct_out = b64encode(c1)
 print(ct_out)
 
-# ct = 'XOUXdm9W/aete12l8+QvSQ=='
+# ct = 'UHG/Gb2IEZGWEBrgAg0NnDJnSSiSSq7HwIxX/raRPu9QW6Oh3XRfXoj0taQbWy3X'
 # ct_out = b64decode(ct)
 
-
 decryptor = cipher.decryptor()
-plain = decryptor.update(ct) + decryptor.finalize()
+unpadder = padding.PKCS7(128).unpadder()
+plain = decryptor.update(c1) + decryptor.finalize()
 plain = unpadder.update(plain) + unpadder.finalize()
+plain = plain.decode("utf-8")
 print(plain)
 
 

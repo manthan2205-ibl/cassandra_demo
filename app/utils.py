@@ -76,7 +76,7 @@ cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
 
 def data_encryptor(data):
     data = data.encode('utf-8')
-    padder = padding.PKCS7(256).padder()
+    padder = padding.PKCS7(128).padder()
     data = padder.update(data) + padder.finalize()
     encryptor = cipher.encryptor()
     ct = encryptor.update(data) + encryptor.finalize()
@@ -85,15 +85,14 @@ def data_encryptor(data):
 
     return ct_out
 
-# ct = 'XOUXdm9W/aete12l8+QvSQ=='
-# ct_out = b64decode(ct)
 
 def data_decryptor(data):
     data = b64decode(data)
-    unpadder = padding.PKCS7(256).unpadder()
+    unpadder = padding.PKCS7(128).unpadder()
     decryptor = cipher.decryptor()
     plain = decryptor.update(data) + decryptor.finalize()
     plain = unpadder.update(plain) + unpadder.finalize()
+    plain = plain.decode("utf-8") 
     print(plain)
     
     return plain
