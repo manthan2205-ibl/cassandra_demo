@@ -58,6 +58,61 @@ def custom_exception_handler(exc, context):
 
 
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.backends import default_backend
+from base64 import b64decode, b64encode
+
+
+backend = default_backend()
+# padder = padding.PKCS7(256).padder()
+# unpadder = padding.PKCS7(256).unpadder()
+
+
+key = b64decode('heyFrj+egrMgWrt+hr//uhEFgbfEf/erFSEhbrphthw=')
+iv = b64decode('YmRocm9xc3JlcG16ZGVoZQ==')
+
+cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
+
+def data_encryptor(data):
+    data = data.encode('utf-8')
+    padder = padding.PKCS7(256).padder()
+    data = padder.update(data) + padder.finalize()
+    encryptor = cipher.encryptor()
+    ct = encryptor.update(data) + encryptor.finalize()
+    ct_out = b64encode(ct)
+    print(ct_out)
+
+    return ct_out
+
+# ct = 'XOUXdm9W/aete12l8+QvSQ=='
+# ct_out = b64decode(ct)
+
+def data_decryptor(data):
+    data = b64decode(data)
+    unpadder = padding.PKCS7(256).unpadder()
+    decryptor = cipher.decryptor()
+    plain = decryptor.update(data) + decryptor.finalize()
+    plain = unpadder.update(plain) + unpadder.finalize()
+    print(plain)
+    
+    return plain
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # from rest_framework import pagination
 # from rest_framework.response import Response
@@ -75,3 +130,60 @@ def custom_exception_handler(exc, context):
 #                         'count': self.page.paginator.count,
 #                         'results': data}}
 #             })
+
+
+
+# from Crypto.Cipher import AES
+# from Crypto.Util import Counter
+# from Crypto import Random
+# import binascii
+# import math, random, string
+
+# # AES supports multiple key sizes: 16 (AES128), 24 (AES192), or 32 (AES256).
+# key_bytes = 32
+# # key = 'c6b93o&ux3dueq3&=wtv8fkp7(g@l%^fl6a(409)$rybb'
+# letters = string.ascii_letters
+# key = ''.join(random.choice(letters) for i in range(32))
+
+# # Takes as input a 32-byte key and an arbitrary-length plaintext and returns a
+# # pair (iv, ciphtertext). "iv" stands for initialization vector.
+# def encrypt(key, plaintext):
+#     assert len(key) == key_bytes
+
+#     # Choose a random, 16-byte IV.
+#     iv = Random.new().read(AES.block_size)
+
+#     # Convert the IV to a Python integer.
+#     iv_int = int(binascii.hexlify(iv), 16) 
+
+#     # Create a new Counter object with IV = iv_int.
+#     ctr = Counter.new(AES.block_size * 8, initial_value=iv_int)
+
+#     # Create AES-CTR cipher.
+#     aes = AES.new(key, AES.MODE_CTR, counter=ctr)
+
+#     # Encrypt and return IV and ciphertext.
+#     ciphertext = aes.encrypt(plaintext)
+#     return (iv, ciphertext)
+
+# # Takes as input a 32-byte key, a 16-byte IV, and a ciphertext, and outputs the
+# # corresponding plaintext.
+# def decrypt(key, iv, ciphertext):
+#     assert len(key) == key_bytes
+
+#     # Initialize counter for decryption. iv should be the same as the output of
+#     # encrypt().
+#     iv_int = int(iv.encode('hex'), 16) 
+#     ctr = Counter.new(AES.block_size * 8, initial_value=iv_int)
+
+#     # Create AES-CTR cipher.
+#     aes = AES.new(key, AES.MODE_CTR, counter=ctr)
+
+#     # Decrypt and return the plaintext.
+#     plaintext = aes.decrypt(ciphertext)
+#     return plaintext
+
+# (iv, ciphertext) = encrypt(key, 'hella')
+
+# print('iv',iv,'ciphertext', ciphertext)
+# print(decrypt(key, iv, ciphertext))

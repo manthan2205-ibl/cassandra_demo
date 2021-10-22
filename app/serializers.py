@@ -27,8 +27,8 @@ class UserLogoutSerializer(Serializer):
 # otp 
 class OTPSerializer(Serializer):
 
-    email = serializers.EmailField(required=True)
-    otp = serializers.IntegerField(required=True)
+    email = serializers.CharField(required=True)
+    otp = serializers.CharField(required=True)
     token_type = serializers.CharField(required=True)
     device_token = serializers.CharField(required=True)
 
@@ -39,7 +39,7 @@ class OTPSerializer(Serializer):
 # login
 class UserLoginSerializer(Serializer):
 
-    email = serializers.EmailField(required=True)
+    email = serializers.CharField(required=True)
     
     class Meta:
         fields = ['email']

@@ -51,6 +51,8 @@ import math, random
 from django.core.mail import send_mail
 from rest_framework.exceptions import APIException
 
+key = 'key'
+
 class TestView(GenericAPIView):
 
     def get(self, request, *args, **kwargs):
@@ -208,17 +210,17 @@ class OTPVerifyView(GenericAPIView):
             print('seconds', seconds)
             
 
-            if not otp == database_OTP:
+            if not int(otp) == int(database_OTP):
                 return Response(data={"status": status.HTTP_400_BAD_REQUEST,
                                         "message": "OTP is wrong, Please enter valid OTP.",
                                         "results":{}},
                             status=status.HTTP_400_BAD_REQUEST)
             
-            if seconds > 120:
-                return Response(data={"status": status.HTTP_400_BAD_REQUEST,
-                                        "message": "OTP is expire, Please send again.",
-                                        "results":{}},
-                            status=status.HTTP_400_BAD_REQUEST)
+            # if seconds > 120:
+            #     return Response(data={"status": status.HTTP_400_BAD_REQUEST,
+            #                             "message": "OTP is expire, Please send again.",
+            #                             "results":{}},
+            #                 status=status.HTTP_400_BAD_REQUEST)
 
             token_type = serializer.validated_data['token_type']
             device_token = serializer.validated_data['device_token']
@@ -242,13 +244,15 @@ class OTPVerifyView(GenericAPIView):
 
             UserTokenModel.objects.create(user_id=user.user_id, token=encoded_token)
             serializer = UserRegisterSerializer(user)
+            data = {
+            'id': str(user.user_id),
+            'token': encoded_token,
+            'user_data':serializer.data}
+            data = json.dumps(data)
             return Response(data={"status": status.HTTP_200_OK,
                                 "message": "User successfully login, Token Generated.",
-                            "results": {'data': {
-                                            'id': str(user.user_id),
-                                            'token': encoded_token,
-                                            #  'device_token': device_token,
-                                            'user_data':serializer.data}}  },
+                            # "results": {'data':  data } },
+                            "results": {'data':  data_encryptor(str(data)) } },
                             status= status.HTTP_200_OK)
         else:
             return Response(data={"status": status.HTTP_400_BAD_REQUEST,
@@ -344,8 +348,8 @@ class UserRegisterView(GenericAPIView):
             user_dic['email'] = user.email
             user_dic['profile_url'] = user.profile_url
             user_dic['status'] = user.status
-            user_dic['is_online'] = user.is_online
-            user_dic['deleted_record'] = user.deleted_record
+            user_dic['is_online'] = str(user.is_online)
+            user_dic['deleted_record'] = str(user.deleted_record)
             user_dic['position'] = user.position
             user_dic['deviceToken'] = user.deviceToken
             user_list.append(user_dic)
@@ -354,7 +358,8 @@ class UserRegisterView(GenericAPIView):
             data={
                 "status":status.HTTP_200_OK,
                 "message":"User list",
-                "results": { 'data' : user_list} },
+                "results": { 'data' : data_encryptor(str(user_list))} },
+                # "results": { 'data' : user_list} },
             status=status.HTTP_200_OK
         )
 
@@ -686,6 +691,10 @@ class UpdateGroupView(GenericAPIView):
 
         print('GroupModel_obj', GroupModel_obj)
         GroupModel_obj.delete()
+        # GroupModel_obj.deleted_record = True
+        # GroupModel_obj.deleted_at = datetime.datetime.utcnow()
+        # GroupModel_obj.deleted_by = request.user.user_id
+        # GroupModel_obj.save()
         
         return Response(data={"status": status.HTTP_200_OK,
                                 "message": "Group deleted",
