@@ -102,20 +102,20 @@ class ListGroupSerializer(Serializer):
     group_profile = serializers.CharField(required=True)
     group_name = serializers.CharField(required=True)
     group_type = serializers.CharField(required=True)
-    is_channel = serializers.BooleanField(required=True)
+    is_channel = serializers.CharField(required=True)
     type = serializers.CharField(required=True)
     members = serializers.ListField(required=True)
     read_by = serializers.ListField(required=True)
     recent_message = serializers.JSONField(required=True)
-    deleted_record = serializers.SerializerMethodField()
+    deleted_record = serializers.CharField(required=True)
 
     class Meta:
         fields = ['group_id','admin_id', 'group_profile', 'group_name',  'group_type',
                   'is_channel', 'type', 'members', 'read_by', 'recent_message', 'deleted_record']
 
-    def get_deleted_record(self, obj):
-        deleted_record = obj.deleted_record
-        return deleted_record
+    # def get_deleted_record(self, obj):
+    #     deleted_record = obj.deleted_record
+    #     return deleted_record
 
 
 # team 

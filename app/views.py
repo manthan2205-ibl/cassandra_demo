@@ -581,6 +581,7 @@ class ListGroupView(ListAPIView):
     def get_queryset(self):
         # user = self.request.user
         query = GroupModel.objects.filter(deleted_record=False).order_by('-created_at')
+        # query = GroupModel.objects.filter(deleted_by__isnull=True).order_by('-created_at')
         return query
 
 
@@ -596,6 +597,7 @@ class CreateGroupView(GenericAPIView):
         try:
             # query = GroupModel.objects.filter(is_channel=True).order_by('-created_at')
             query = GroupModel.objects.filter(deleted_record=False).order_by('-created_at')
+            # query = GroupModel.objects.filter(deleted_by__isnull=True).order_by('-created_at')
             # for i in query:
             #     i.deleted_record=False
             #     i.save()

@@ -9,17 +9,22 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 10
 
     def get_paginated_response(self, data):
-        data = json.dumps(data)
-        print('data', data)
-        return Response({
-            "status": 200,
-            "message": "Your list",
-            'results':{'data':{ 
+        # data = json.dumps(data)
+        # print('data', data)
+        data1 = {'data':{ 
                         'next': self.get_next_link(),
                         'previous': self.get_previous_link(),
                         'count': self.page.paginator.count,
-                        'results': data_encryptor(str(data)) }}
-            })
+                        'results': data }
+                        }
+        data1 = json.dumps(data1)
+        print('data1', data1)
+        data1 = data_encryptor(str(data1))
+        return Response({
+            "status": 200,
+            "message": "Your list",
+            'results': data1 }
+            )
 
 
 
