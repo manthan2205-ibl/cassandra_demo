@@ -97,51 +97,54 @@ def data_decryptor(data):
     
     return plain
 
-from cassandra_demo import settings
-import os
-from django.conf import settings
+# from cassandra_demo import settings
+# import os
+# from django.conf import settings
 
-database = settings.DATABASES
-# print('database', database)
+# database = settings.DATABASES
+# # print('database', database)
 
-cassandra = database['cassandra']
-# print('cassandra', cassandra)
-NAME = cassandra['NAME']
-print('NAME', NAME)
+# cassandra = database['cassandra']
+# # print('cassandra', cassandra)
+# NAME = cassandra['NAME']
+# print('NAME', NAME)
 
-# settings.DATABASES['cassandra']['NAME'] = 'new_database'
-# settings.configure(DEBUG=False)
+# # settings.DATABASES['cassandra']['NAME'] = 'new_database'
+# # if not settings.configured:
+# #     settings.configure(DEBUG=False)
+# #     print('NAME', NAME)
+# # settings.configure(DEBUG=False)
 
-print('NAME', NAME)
-def new_database():
+# print('NAME', NAME)
+# def new_database():
     
-    database_id = user.username #just something unique
-    newDatabase = {}
-    newDatabase["id"] = database_id
-    newDatabase['ENGINE'] = 'django.db.backends.sqlite3'
-    newDatabase['NAME'] = '/path/to/db_%s.sql' % database_id
-    newDatabase['USER'] = ''
-    newDatabase['PASSWORD'] = ''
-    newDatabase['HOST'] = ''
-    newDatabase['PORT'] = ''
-    settings.DATABASES[database_id] = newDatabase
-    save_db_settings_to_file(newDatabase)
+#     database_id = user.username #just something unique
+#     newDatabase = {}
+#     newDatabase["id"] = database_id
+#     newDatabase['ENGINE'] = 'django.db.backends.sqlite3'
+#     newDatabase['NAME'] = '/path/to/db_%s.sql' % database_id
+#     newDatabase['USER'] = ''
+#     newDatabase['PASSWORD'] = ''
+#     newDatabase['HOST'] = ''
+#     newDatabase['PORT'] = ''
+#     settings.DATABASES[database_id] = newDatabase
+#     save_db_settings_to_file(newDatabase)
 
 
-def save_db_settings_to_file(db_settings):
-    path_to_store_settings = "/path/to/your/project/YOUR_PROJECT_NAME/database_settings/"
-    newDbString = """
-    DATABASES['%(id)s'] = {
-    'ENGINE': '%(ENGINE)s', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-    'NAME': '%(NAME)s',                      # Or path to database file if using sqlite3.
-    'USER': '',                      # Not used with sqlite3.
-    'PASSWORD': '',                  # Not used with sqlite3.
-    'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-    'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-        }
-    """ % db_settings
-    file_to_store_settings = os.path.join(path_to_store_settings, db_settings['id'] + ".py")
-    write_file(file_to_store_settings, newDbString) #psuedocode for compactness
+# def save_db_settings_to_file(db_settings):
+#     path_to_store_settings = "/path/to/your/project/YOUR_PROJECT_NAME/database_settings/"
+#     newDbString = """
+#     DATABASES['%(id)s'] = {
+#     'ENGINE': '%(ENGINE)s', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+#     'NAME': '%(NAME)s',                      # Or path to database file if using sqlite3.
+#     'USER': '',                      # Not used with sqlite3.
+#     'PASSWORD': '',                  # Not used with sqlite3.
+#     'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+#     'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+#         }
+#     """ % db_settings
+#     file_to_store_settings = os.path.join(path_to_store_settings, db_settings['id'] + ".py")
+#     write_file(file_to_store_settings, newDbString) #psuedocode for compactness
 
 
 

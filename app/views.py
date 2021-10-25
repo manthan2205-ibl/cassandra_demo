@@ -406,8 +406,8 @@ class UserRegisterView(GenericAPIView):
             data={
                 "status":status.HTTP_200_OK,
                 "message":"User list",
-                "results": { 'data' : data_encryptor(str(user_list))} },
-                # "results": { 'data' : user_list} },
+                # "results": { 'data' : data_encryptor(str(user_list))} },
+                "results": { 'data' : user_list} },
             status=status.HTTP_200_OK
         )
 
@@ -1041,36 +1041,36 @@ class CreateMessageView(GenericAPIView):
             MessageModel_obj.team_id=team_id
             MessageModel_obj.save()
 
-        GroupModel_obj = GroupModel.objects.get(group_id=group_id)
-        for i in GroupModel_obj.members:
-            UserModel_obj = UserModel.objects.get(user_id=i)
-            is_online = UserModel_obj.is_online
-            if is_online == False:
-                user_data ={
-                        "to": UserModel_obj.deviceToken,
-                        "priority": "high",
-                        "data": {
-                            "payload": {
-                                "type": "Admin"
-                            },
-                            "title": "title",
-                            "subtitle": message
-                        },
-                        "notification": {
-                            "body": message,
-                            "title": "title",
-                            "sound": "default",
-                            # "badge": str(user.badge_count)
-                        }
-                    }
+        # GroupModel_obj = GroupModel.objects.get(group_id=group_id)
+        # for i in GroupModel_obj.members:
+        #     UserModel_obj = UserModel.objects.get(user_id=i)
+        #     is_online = UserModel_obj.is_online
+        #     if is_online == False:
+        #         user_data ={
+        #                 "to": UserModel_obj.deviceToken,
+        #                 "priority": "high",
+        #                 "data": {
+        #                     "payload": {
+        #                         "type": "Admin"
+        #                     },
+        #                     "title": "title",
+        #                     "subtitle": message
+        #                 },
+        #                 "notification": {
+        #                     "body": message,
+        #                     "title": "title",
+        #                     "sound": "default",
+        #                     # "badge": str(user.badge_count)
+        #                 }
+        #             }
 
-                data_url = 'https://fcm.googleapis.com/fcm/send'
-                    # access_token = 'AAAAUHuO360:APA91bFH3VwA9c67fNYTAd89ylCJ4XnKirlCTM4Ah3iw5ICRabgjsZILN_la9QLPv9BASwwdyFC9Fhb4MgU3eOHAdPldkW7Y8QWKic1Vp1ED4wa3mnKmO3gGfq8MqVNvAMZ7aMMC9gtb'
-                data_request = requests.post(url=data_url,
-                                                headers={
-                                                    'Content-Type': 'application/json',
-                                                   'Authorization': 'key=AAAAUHuO360:APA91bFH3VwA9c67fNYTAd89ylCJ4XnKirlCTM4Ah3iw5ICRabgjsZILN_la9QLPv9BASwwdyFC9Fhb4MgU3eOHAdPldkW7Y8QWKic1Vp1ED4wa3mnKmO3gGfq8MqVNvAMZ7aMMC9gtb'},
-                                               data=json.dumps(user_data))
+        #         data_url = 'https://fcm.googleapis.com/fcm/send'
+        #             # access_token = 'AAAAUHuO360:APA91bFH3VwA9c67fNYTAd89ylCJ4XnKirlCTM4Ah3iw5ICRabgjsZILN_la9QLPv9BASwwdyFC9Fhb4MgU3eOHAdPldkW7Y8QWKic1Vp1ED4wa3mnKmO3gGfq8MqVNvAMZ7aMMC9gtb'
+        #         data_request = requests.post(url=data_url,
+        #                                         headers={
+        #                                             'Content-Type': 'application/json',
+        #                                            'Authorization': 'key=AAAAUHuO360:APA91bFH3VwA9c67fNYTAd89ylCJ4XnKirlCTM4Ah3iw5ICRabgjsZILN_la9QLPv9BASwwdyFC9Fhb4MgU3eOHAdPldkW7Y8QWKic1Vp1ED4wa3mnKmO3gGfq8MqVNvAMZ7aMMC9gtb'},
+        #                                        data=json.dumps(user_data))
 
 
 
