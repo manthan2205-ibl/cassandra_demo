@@ -97,6 +97,8 @@ def data_decryptor(data):
     
     return plain
 
+
+
 # from cassandra_demo import settings
 # import os
 # from django.conf import settings
@@ -109,11 +111,11 @@ def data_decryptor(data):
 # NAME = cassandra['NAME']
 # print('NAME', NAME)
 
-# # settings.DATABASES['cassandra']['NAME'] = 'new_database'
-# # if not settings.configured:
-# #     settings.configure(DEBUG=False)
-# #     print('NAME', NAME)
-# # settings.configure(DEBUG=False)
+# settings.DATABASES['cassandra']['NAME'] = 'new_database'
+# if not settings.configured:
+#     settings.configure(DEBUG=False)
+#     print('NAME', NAME)
+# settings.configure(DEBUG=False)
 
 # print('NAME', NAME)
 # def new_database():

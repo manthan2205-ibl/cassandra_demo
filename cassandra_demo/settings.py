@@ -138,6 +138,7 @@ DATABASES = {
                 },
                 'connection': {
                     'consistency': ConsistencyLevel.LOCAL_ONE,
+                    # QUORUM
                     'retry_connect': True
                     # + All connection options for cassandra.cluster.Cluster()
                 },
@@ -150,7 +151,28 @@ DATABASES = {
         }
     }
 
+
 # SESSION_ENGINE = 'django_cassandra_engine.sessions.backends.db'
+
+
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django_cassandra_engine',
+#             'NAME': 'db_name',
+#             'TEST_NAME': 'db_name',
+#             'USER': 'username',
+#             'PASSWORD': 'password',
+#             'HOST': '0e14d33e-6547-44d2-8089-3ccf94c4faaf-ap-southeast-1.apps.astra.datastax.com',
+#             'OPTIONS': {
+#                 'connection': {
+#                     'cloud': {
+#                         'secure_connect_bundle': 'D:/laptop/company/IBL infotech/topics/cassandra/secure-connect-cassandra-demo.zip'
+#                     },
+#                 }
+#             }
+#         }
+#     }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

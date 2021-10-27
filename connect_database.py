@@ -1,5 +1,5 @@
 from cassandra.cluster import Cluster
-from cassandra.auth import PlainTextAuthProvider
+from cassandra.auth import PlainTextAuthProvider, SaslAuthProvider
 
 cloud_config= {
         'secure_connect_bundle': 'D:/laptop/company/IBL infotech/topics/cassandra/secure-connect-cassandra-demo.zip'
@@ -10,8 +10,12 @@ auth_provider = PlainTextAuthProvider(CLIENT_ID, CLIENT_SECRET)
 cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
 session = cluster.connect()
 
-row = session.execute("select release_version from system.local").one()
-if row:
-    print(row[0])
-else:
-    print("An error occurred.")
+# row = session.execute("select release_version from system.local").one()
+# if row:
+#     print(row[0])
+# else:
+#     print("An error occurred.")
+
+demo = session.execute("CREATE KEYSPACE demo WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}")
+# keyspaces = session.execute("DESCRIBE python_demo")
+print('demo', demo)
