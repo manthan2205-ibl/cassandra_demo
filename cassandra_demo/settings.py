@@ -126,9 +126,10 @@ DATABASES = {
         'cassandra': {
             'ENGINE': 'django_cassandra_engine',
             'NAME': 'tutorialspoint',
+            # 'NAME': 'abc',
             'USER': 'cassandra',
             'PASSWORD': 'cassandra',
-            'TEST_NAME': 'test_db',
+            'TEST_NAME': 'abc',
             'HOST': '127.0.0.1',
             'OPTIONS': {
                 'replication': {
@@ -148,7 +149,59 @@ DATABASES = {
                     # + All options for cassandra.cluster.Session()
                 }
             }
-        }
+        },
+        # 'cassandra1': {
+        #     'ENGINE': 'django_cassandra_engine',
+        #     'NAME': 'abc1',
+        #     'USER': 'cassandra',
+        #     'PASSWORD': 'cassandra',
+        #     'TEST_NAME': 'abc1',
+        #     'HOST': '127.0.0.1',
+        #     'OPTIONS': {
+        #         'replication': {
+        #             'strategy_class': 'SimpleStrategy',
+        #             # NetworkTopologyStrategy
+        #             'replication_factor': 1
+        #         },
+        #         'connection': {
+        #             'consistency': ConsistencyLevel.LOCAL_ONE,
+        #             # QUORUM
+        #             'retry_connect': True
+        #             # + All connection options for cassandra.cluster.Cluster()
+        #         },
+        #         'session': {
+        #             'default_timeout': 10,
+        #             'default_fetch_size': 10000
+        #             # + All options for cassandra.cluster.Session()
+        #         }
+        #     }
+        # },
+        # 'cassandra2': {
+        #     'ENGINE': 'django_cassandra_engine',
+        #     'NAME': 'ibl',
+        #     'USER': 'cassandra',
+        #     'PASSWORD': 'cassandra',
+        #     'TEST_NAME': 'test_db',
+        #     'HOST': '127.0.0.1',
+        #     'OPTIONS': {
+        #         'replication': {
+        #             'strategy_class': 'SimpleStrategy',
+        #             # NetworkTopologyStrategy
+        #             'replication_factor': 1
+        #         },
+        #         'connection': {
+        #             'consistency': ConsistencyLevel.LOCAL_ONE,
+        #             # QUORUM
+        #             'retry_connect': True
+        #             # + All connection options for cassandra.cluster.Cluster()
+        #         },
+        #         'session': {
+        #             'default_timeout': 10,
+        #             'default_fetch_size': 10000
+        #             # + All options for cassandra.cluster.Session()
+        #         }
+        #     }
+        # }
     }
 
 

@@ -166,6 +166,8 @@ class UserLoginView(GenericAPIView):
             user.otp_created_at = datetime.datetime.utcnow()
             user.save()
 
+            # tenent id 
+
             try:
                 message = "Your OTP  for verify email \n" \
                             "OTP :-  {0}".format(OTP)

@@ -9,6 +9,8 @@ from django_cassandra_engine.models import DjangoCassandraModel
 from django.contrib.auth.models import AbstractBaseUser
 
 class ExampleModel(DjangoCassandraModel):
+    # _table_name = "users"
+    # __keyspace__ = ["sarvadhi", "tutorialspoint"]
     example_id   = columns.UUID(primary_key=True, default=uuid.uuid4)
     example_type = columns.Integer(index=True)
     created_at   = columns.DateTime(default=datetime.datetime.now())
